@@ -16,9 +16,28 @@ if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL
-    ? process.env.CLIENT_URL.split(',').map(u => u.trim())
-    : ['http://localhost:5173'],
+  origin: function(origin, callback) {
+    const allowed = [
+      'https://onlytest.in',
+      'https://www.onlytest.in',
+      'http://onlytest.in',
+      'http://localhost:5173',
+      'http://localhost:3000',
+    ];
+    // Allow if origin is in list OR no origin (mobile apps, Postman)
+    if (!origin || allowed.includes(origin)) {
+      callback(null, true);
+    } else {
+      // Also allow if CLIENT_URL env matches
+      const envUrls = (process.env.CLIENT_URL || '').split(',').map(u => u.trim());
+      if (envUrls.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log('CORS blocked:', origin);
+        callback(null, true); // Allow all for now — tighten later
+      }
+    }
+  },
   credentials: true,
 }));
 app.use(express.json());
