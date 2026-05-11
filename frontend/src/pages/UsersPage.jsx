@@ -186,7 +186,7 @@ export default function UsersPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={closeModal}>
+        <div className="modal-overlay">
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             {/* Handle */}
             <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1 sm:hidden" style={{ backgroundColor: 'var(--border)' }} />

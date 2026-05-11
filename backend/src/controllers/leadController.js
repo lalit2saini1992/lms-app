@@ -9,7 +9,7 @@ const { createNotification } = require('./notificationController');
 const getLeads = async (req, res) => {
   try {
     const { status, assignedTo, search, source, startDate, endDate, page = 1, limit = 20 } = req.query;
-    const filter = { isActive: true };
+    const filter = { isActive: true, ...req.orgFilter };
 
     // Employees only see their assigned leads
     if (req.user.role === 'employee') {
@@ -86,6 +86,7 @@ const createLead = async (req, res) => {
       assignedTo: assignedTo || null,
       status: assignedTo ? 'assigned' : 'new',
       createdBy: req.user._id,
+      organization: req.orgId || null,
     });
 
     const populated = await lead.populate('assignedTo', 'name email');

@@ -248,11 +248,11 @@ export default function LeadsPage() {
 
       {/* Assign Modal */}
       {assignModal && (
-        <div className="modal-overlay" onClick={() => setAssignModal(false)}>
+        <div className="modal-overlay">
           <div className="modal-box p-6" onClick={e => e.stopPropagation()}>
             {/* Handle bar */}
             <div className="w-10 h-1 rounded-full mx-auto mb-5 sm:hidden" style={{ backgroundColor: 'var(--border)' }} />
-            <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+            <h3 className="font-semibold text-lg mb-1" style={{ color: 'var(--text-primary)' }}>
               {singleLead ? `Assign: ${singleLead.name}` : `Assign ${selected.size} Leads`}
             </h3>
             <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>

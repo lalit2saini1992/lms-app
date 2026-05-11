@@ -24,7 +24,8 @@ const leadSchema = new mongoose.Schema(
     budget: { type: String, trim: true },
     nextFollowUpDate: { type: Date },
     lastContactedAt: { type: Date },
-    importBatch: { type: String }, // for tracking excel imports
+    importBatch: { type: String },
+    organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', default: null },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

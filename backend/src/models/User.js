@@ -9,9 +9,11 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, trim: true },
     role: {
       type: String,
-      enum: ['superadmin', 'admin', 'manager', 'employee'],
+      enum: ['superadmin', 'admin', 'manager', 'employee', 'custom', 'orgadmin'],
       default: 'employee',
     },
+    customRole: { type: mongoose.Schema.Types.ObjectId, ref: 'Role', default: null },
+    organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', default: null },
     permissions: {
       canAddLead: { type: Boolean, default: false },
       canEditLead: { type: Boolean, default: false },

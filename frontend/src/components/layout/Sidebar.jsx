@@ -3,10 +3,13 @@ import useAuthStore from '../../store/authStore';
 
 const navItems = [
   { to: '/dashboard',      icon: '⚡', label: 'Dashboard' },
-  { to: '/leads',          icon: '👥', label: 'Leads' },
-  { to: '/reports',        icon: '📊', label: 'Reports',         permission: 'canViewReports' },
-  { to: '/users',          icon: '👤', label: 'Users',            permission: 'canManageUsers' },
-  { to: '/followup-types', icon: '🏷️', label: 'Follow-up Types', permission: 'canManageFollowupTypes' },
+  { to: '/leads',          icon: '👥', label: 'Leads',           hideForSuperadmin: true },
+  { to: '/organizations',  icon: '🏢', label: 'Organizations',   superadminOnly: true },
+  { to: '/plans',          icon: '💳', label: 'Plans',           superadminOnly: true },
+  { to: '/reports',        icon: '📊', label: 'Reports',         permission: 'canViewReports', hideForSuperadmin: true },
+  { to: '/users',          icon: '👤', label: 'Users',           permission: 'canManageUsers', hideForSuperadmin: true },
+  { to: '/roles',          icon: '🛡️', label: 'Roles',           permission: 'canManageUsers', hideForSuperadmin: true },
+  { to: '/followup-types', icon: '🏷️', label: 'Follow-up Types', permission: 'canManageFollowupTypes', hideForSuperadmin: true },
 ];
 
 export default function Sidebar({ open, onClose }) {
@@ -14,6 +17,8 @@ export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate();
 
   const canShow = (item) => {
+    if (item.superadminOnly && user?.role !== 'superadmin') return false;
+    if (item.hideForSuperadmin && user?.role === 'superadmin') return false;
     if (item.permission && !user?.permissions?.[item.permission]) return false;
     return true;
   };
@@ -94,7 +99,7 @@ export default function Sidebar({ open, onClose }) {
         <p className="text-center mt-3 text-[10px]" style={{ color: 'var(--text-muted)' }}>
           © {new Date().getFullYear()} LMS Pro · Developed with{' '}
           <span className="text-red-400">♥</span>{' '}by{' '}
-          <span style={{ color: 'var(--accent)', fontWeight: 700 }}>Kiro</span>
+          <span style={{ color: 'var(--accent)', fontWeight: 700 }}>Lalit</span>
         </p>
       </div>    </aside>
   );

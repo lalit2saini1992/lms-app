@@ -15,10 +15,10 @@ export default function LeadDetailPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  const [showFUForm, setShowFUForm] = useState(false);
-  const [fuForm, setFuForm] = useState({
-    followUpTypeId: '', communicationMethod: 'call', remark: '', nextFollowUpDate: '',
-  });
+  const [showFUForm, setShowFUForm]   = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [fuForm, setFuForm] = useState({ followUpTypeId: '', communicationMethod: 'call', remark: '', nextFollowUpDate: '' });
+  const [editForm, setEditForm] = useState({});
 
   const { data: leadData, isLoading } = useQuery({
     queryKey: ['lead', id],
@@ -45,9 +45,57 @@ export default function LeadDetailPage() {
     onError: (err) => toast.error(err.response?.data?.message || 'Failed'),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (data) => leadsAPI.update(id, data),
+    onSuccess: () => {
+      toast.success('Lead updated!');
+      qc.invalidateQueries(['lead', id]);
+      qc.invalidateQueries(['leads']);
+      setShowEditForm(false);
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Failed'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => leadsAPI.delete(id),
+    onSuccess: () => {
+      toast.success('Lead deleted');
+      qc.invalidateQueries(['leads']);
+      navigate('/leads');
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Failed'),
+  });
+
   const lead     = leadData?.lead;
   const followUps = followUpsData?.followUps || [];
   const types    = typesData?.types || [];
+
+  const openEdit = () => {
+    setEditForm({
+      name: lead.name, phone: lead.phone, email: lead.email || '',
+      source: lead.source, status: lead.status, city: lead.city || '',
+      product: lead.product || '', budget: lead.budget || '', notes: lead.notes || '',
+      address: lead.address || '',
+    });
+    setShowEditForm(true);
+  };
+
+  const handleDelete = () => {
+    if (window.confirm(`Delete lead "${lead.name}"? This cannot be undone.`)) {
+      deleteMutation.mutate();
+    }
+  };
+
+  const handleFUSubmit = (e) => {
+    e.preventDefault();
+    if (!fuForm.followUpTypeId) return toast.error('Select a follow-up type');
+    createFUMutation.mutate({ leadId: id, ...fuForm });
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    updateMutation.mutate(editForm);
+  };
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-64">
@@ -61,18 +109,19 @@ export default function LeadDetailPage() {
     </div>
   );
 
-  const handleFUSubmit = (e) => {
-    e.preventDefault();
-    if (!fuForm.followUpTypeId) return toast.error('Select a follow-up type');
-    createFUMutation.mutate({ leadId: id, ...fuForm });
-  };
-
   const InfoRow = ({ label, value }) => value ? (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ color: 'var(--text-muted)' }}>{label}</p>
-      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{value}</p>
+      <p className="text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>{value}</p>
     </div>
   ) : null;
+
+  const Field = ({ label, children }) => (
+    <div>
+      <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>{label}</label>
+      {children}
+    </div>
+  );
 
   return (
     <div className="space-y-4 page-enter">
@@ -97,9 +146,20 @@ export default function LeadDetailPage() {
               <p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--accent)' }}>{lead.phone}</p>
             </div>
           </div>
-          <span className={`badge text-sm px-3 py-1 ${statusColors[lead.status]}`}>
-            {statusLabels[lead.status]}
-          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`badge text-sm px-3 py-1 ${statusColors[lead.status]}`}>
+              {statusLabels[lead.status]}
+            </span>
+            {user?.permissions?.canEditLead && (
+              <button onClick={openEdit} className="btn-secondary text-xs px-3 py-1.5">✏️ Edit</button>
+            )}
+            {user?.permissions?.canDeleteLead && (
+              <button onClick={handleDelete} className="btn-danger text-xs px-3 py-1.5"
+                disabled={deleteMutation.isPending}>
+                🗑️ Delete
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Info Grid */}
@@ -142,33 +202,94 @@ export default function LeadDetailPage() {
               📧 Email
             </a>
           )}
-          <button onClick={() => setShowFUForm(!showFUForm)}
-            className="btn-primary flex-1 sm:flex-none">
+          <button onClick={() => setShowFUForm(!showFUForm)} className="btn-primary flex-1 sm:flex-none">
             {showFUForm ? '✕ Cancel' : '+ Add Follow-up'}
           </button>
         </div>
       </div>
 
+      {/* Edit Form */}
+      {showEditForm && (
+        <div className="card" style={{ border: '2px solid var(--accent)' }}>
+          <h2 className="section-title mb-4">Edit Lead</h2>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Full Name *">
+                <input className="input" value={editForm.name}
+                  onChange={e => setEditForm({ ...editForm, name: e.target.value })} required />
+              </Field>
+              <Field label="Phone *">
+                <input className="input" value={editForm.phone}
+                  onChange={e => setEditForm({ ...editForm, phone: e.target.value })} required />
+              </Field>
+              <Field label="Email">
+                <input type="email" className="input" value={editForm.email}
+                  onChange={e => setEditForm({ ...editForm, email: e.target.value })} />
+              </Field>
+              <Field label="Status">
+                <select className="input" value={editForm.status}
+                  onChange={e => setEditForm({ ...editForm, status: e.target.value })}>
+                  {Object.entries(statusLabels).map(([k, v]) => (
+                    <option key={k} value={k}>{v}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="City">
+                <input className="input" value={editForm.city}
+                  onChange={e => setEditForm({ ...editForm, city: e.target.value })} />
+              </Field>
+              <Field label="Product">
+                <input className="input" value={editForm.product}
+                  onChange={e => setEditForm({ ...editForm, product: e.target.value })} />
+              </Field>
+              <Field label="Budget">
+                <input className="input" value={editForm.budget}
+                  onChange={e => setEditForm({ ...editForm, budget: e.target.value })} />
+              </Field>
+              <Field label="Source">
+                <select className="input" value={editForm.source}
+                  onChange={e => setEditForm({ ...editForm, source: e.target.value })}>
+                  <option value="manual">Manual</option>
+                  <option value="website">Website</option>
+                  <option value="referral">Referral</option>
+                  <option value="social_media">Social Media</option>
+                  <option value="excel">Excel</option>
+                  <option value="other">Other</option>
+                </select>
+              </Field>
+              <div className="md:col-span-2">
+                <Field label="Notes">
+                  <textarea className="input resize-none" rows={3} value={editForm.notes}
+                    onChange={e => setEditForm({ ...editForm, notes: e.target.value })} />
+                </Field>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button type="submit" className="btn-primary flex-1" disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? 'Saving...' : '✓ Save Changes'}
+              </button>
+              <button type="button" className="btn-secondary" onClick={() => setShowEditForm(false)}>Cancel</button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Follow-up Form */}
       {showFUForm && (
-        <div className="card" style={{ border: '2px solid var(--accent)', borderColor: 'var(--accent)' }}>
+        <div className="card" style={{ border: '2px solid var(--accent)' }}>
           <h2 className="section-title mb-4">Add Follow-up</h2>
           <form onSubmit={handleFUSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
-                  style={{ color: 'var(--text-muted)' }}>Follow-up Type *</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>Follow-up Type *</label>
                 <select className="input" value={fuForm.followUpTypeId}
                   onChange={e => setFuForm({ ...fuForm, followUpTypeId: e.target.value })} required>
                   <option value="">Select type...</option>
-                  {types.map(t => (
-                    <option key={t._id} value={t._id}>{t.label}</option>
-                  ))}
+                  {types.map(t => <option key={t._id} value={t._id}>{t.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
-                  style={{ color: 'var(--text-muted)' }}>Communication Method *</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>Communication Method *</label>
                 <select className="input" value={fuForm.communicationMethod}
                   onChange={e => setFuForm({ ...fuForm, communicationMethod: e.target.value })}>
                   <option value="call">📞 Call</option>
@@ -181,27 +302,20 @@ export default function LeadDetailPage() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
-                style={{ color: 'var(--text-muted)' }}>Remark</label>
-              <textarea className="input resize-none" rows={3}
-                placeholder="Add your notes here..."
-                value={fuForm.remark}
-                onChange={e => setFuForm({ ...fuForm, remark: e.target.value })} />
+              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>Remark</label>
+              <textarea className="input resize-none" rows={3} placeholder="Add your notes..."
+                value={fuForm.remark} onChange={e => setFuForm({ ...fuForm, remark: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
-                style={{ color: 'var(--text-muted)' }}>Next Follow-up Date & Time</label>
-              <input type="datetime-local" className="input"
-                value={fuForm.nextFollowUpDate}
+              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>Next Follow-up Date & Time</label>
+              <input type="datetime-local" className="input" value={fuForm.nextFollowUpDate}
                 onChange={e => setFuForm({ ...fuForm, nextFollowUpDate: e.target.value })} />
             </div>
             <div className="flex gap-3">
-              <button type="submit" className="btn-primary flex-1"
-                disabled={createFUMutation.isPending}>
+              <button type="submit" className="btn-primary flex-1" disabled={createFUMutation.isPending}>
                 {createFUMutation.isPending ? 'Saving...' : '✓ Save Follow-up'}
               </button>
-              <button type="button" className="btn-secondary"
-                onClick={() => setShowFUForm(false)}>Cancel</button>
+              <button type="button" className="btn-secondary" onClick={() => setShowFUForm(false)}>Cancel</button>
             </div>
           </form>
         </div>
@@ -216,49 +330,35 @@ export default function LeadDetailPage() {
             {followUps.length} entries
           </span>
         </div>
-
         {followUps.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-3xl mb-2">📋</p>
             <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>No follow-ups yet</p>
-            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Add the first one above</p>
           </div>
         ) : (
           <div className="space-y-3">
             {followUps.map((fu, i) => (
               <div key={fu._id} className="flex gap-3">
-                {/* Timeline line */}
                 <div className="flex flex-col items-center">
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0"
                     style={{ backgroundColor: 'var(--bg-card2)', border: '2px solid var(--border)' }}>
                     {communicationIcons[fu.communicationMethod]}
                   </div>
                   {i < followUps.length - 1 && (
-                    <div className="w-0.5 flex-1 mt-2 mb-0" style={{ backgroundColor: 'var(--border)' }} />
+                    <div className="w-0.5 flex-1 mt-2" style={{ backgroundColor: 'var(--border)' }} />
                   )}
                 </div>
-
-                {/* Content */}
                 <div className="flex-1 pb-4">
                   <div className="p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-card2)' }}>
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className="badge text-xs font-semibold px-2 py-0.5 rounded-lg"
-                        style={{
-                          backgroundColor: (fu.followUpType?.color || '#7c3aed') + '20',
-                          color: fu.followUpType?.color || '#7c3aed',
-                        }}>
+                        style={{ backgroundColor: (fu.followUpType?.color || '#7c3aed') + '20', color: fu.followUpType?.color || '#7c3aed' }}>
                         {fu.followUpType?.label}
                       </span>
-                      <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
-                        {fu.doneBy?.name}
-                      </span>
-                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                        · {timeAgo(fu.createdAt)}
-                      </span>
+                      <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{fu.doneBy?.name}</span>
+                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>· {timeAgo(fu.createdAt)}</span>
                     </div>
-                    {fu.remark && (
-                      <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{fu.remark}</p>
-                    )}
+                    {fu.remark && <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{fu.remark}</p>}
                     {fu.nextFollowUpDate && (
                       <p className="text-xs mt-1.5 font-semibold" style={{ color: 'var(--accent)' }}>
                         📅 Next: {formatDateTime(fu.nextFollowUpDate)}

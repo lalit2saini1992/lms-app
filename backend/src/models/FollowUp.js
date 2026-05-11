@@ -12,7 +12,8 @@ const followUpSchema = new mongoose.Schema(
     },
     remark: { type: String, trim: true },
     nextFollowUpDate: { type: Date },
-    callDuration: { type: Number }, // in seconds, optional
+    callDuration: { type: Number },
+    organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', default: null },
   },
   { timestamps: true }
 );

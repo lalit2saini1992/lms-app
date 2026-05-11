@@ -131,7 +131,7 @@ export default function FollowUpTypesPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={closeModal}>
+        <div className="modal-overlay">
           <div className="modal-box p-6" onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 rounded-full mx-auto mb-4 sm:hidden" style={{ backgroundColor: 'var(--border)' }} />
             <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--text-primary)' }}>

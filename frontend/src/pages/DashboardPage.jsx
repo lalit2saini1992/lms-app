@@ -31,9 +31,41 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
-  const { data: statsData } = useQuery({ queryKey: ['dashboard-stats'],    queryFn: () => dashboardAPI.getStats().then(r => r.data) });
-  const { data: chartData }  = useQuery({ queryKey: ['dashboard-chart'],   queryFn: () => dashboardAPI.getChart().then(r => r.data) });
-  const { data: activityData }= useQuery({ queryKey: ['dashboard-activity'],queryFn: () => dashboardAPI.getActivity().then(r => r.data) });
+  const isSuperAdmin = user?.role === 'superadmin';
+
+  const { data: statsData } = useQuery({ queryKey: ['dashboard-stats'],    queryFn: () => dashboardAPI.getStats().then(r => r.data), enabled: !isSuperAdmin });
+  const { data: chartData }  = useQuery({ queryKey: ['dashboard-chart'],   queryFn: () => dashboardAPI.getChart().then(r => r.data), enabled: !isSuperAdmin });
+  const { data: activityData }= useQuery({ queryKey: ['dashboard-activity'],queryFn: () => dashboardAPI.getActivity().then(r => r.data), enabled: !isSuperAdmin });
+  const { data: orgStatsData }= useQuery({ queryKey: ['org-stats'],        queryFn: () => import('../api').then(m => m.orgsAPI.getStats()).then(r => r.data), enabled: isSuperAdmin });
+
+  if (isSuperAdmin) {
+    const s = orgStatsData?.stats || {};
+    return (
+      <div className="space-y-6 page-enter">
+        <div>
+          <h1 className="text-2xl font-black" style={{ color: 'var(--text-primary)' }}>Platform Dashboard</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            Welcome, <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{user?.name}</span> — Super Admin
+          </p>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard label="Total Organizations" value={s.totalOrgs}     icon="🏢" color="bg-violet-50" />
+          <StatCard label="Active"              value={s.activeOrgs}    icon="✅" color="bg-emerald-50" />
+          <StatCard label="Trial"               value={s.trialOrgs}     icon="⏳" color="bg-blue-50" />
+          <StatCard label="Expiring Soon"       value={s.expiringSoon}  icon="⚠️" color="bg-red-50" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <StatCard label="Total Users"  value={s.totalUsers}  icon="👤" color="bg-indigo-50" />
+          <StatCard label="Total Leads"  value={s.totalLeads}  icon="👥" color="bg-amber-50" />
+        </div>
+        <div className="card text-center py-8">
+          <p className="text-4xl mb-3">🏢</p>
+          <p className="font-bold" style={{ color: 'var(--text-primary)' }}>Manage Organizations & Plans</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Use the sidebar to create organizations and subscription plans</p>
+        </div>
+      </div>
+    );
+  }
 
   const stats       = statsData?.stats || {};
   const statusChart = (chartData?.statusData || []).map(d => ({ name: statusLabels[d._id] || d._id, value: d.count }));

@@ -14,6 +14,9 @@ import FollowUpTypesPage from './pages/FollowUpTypesPage';
 import ReportsPage from './pages/ReportsPage';
 
 import ProfilePage from './pages/ProfilePage';
+import RolesPage from './pages/RolesPage';
+import OrganizationsPage from './pages/OrganizationsPage';
+import PlansPage from './pages/PlansPage';
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
@@ -55,6 +58,9 @@ export default function App() {
           <Route path="followup-types" element={<FollowUpTypesPage />} />
           <Route path="reports"        element={<ReportsPage />} />
           <Route path="profile"        element={<ProfilePage />} />
+          <Route path="roles"          element={<RolesPage />} />
+          <Route path="organizations"  element={<OrganizationsPage />} />
+          <Route path="plans"          element={<PlansPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

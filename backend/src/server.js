@@ -8,7 +8,11 @@ const connectDB = require('./config/db');
 const app = express();
 
 // Connect to MongoDB
-connectDB();
+connectDB().then(() => {
+  // Seed system roles after DB connects
+  const { seedSystemRoles } = require('./controllers/roleController');
+  seedSystemRoles();
+});
 
 // Create uploads directory if not exists
 const uploadsDir = path.join(__dirname, '../uploads');
@@ -44,13 +48,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api/auth',        require('./routes/auth'));
-app.use('/api/users',       require('./routes/users'));
-app.use('/api/leads',       require('./routes/leads'));
-app.use('/api/followups',   require('./routes/followups'));
-app.use('/api/dashboard',   require('./routes/dashboard'));
+app.use('/api/auth',         require('./routes/auth'));
+app.use('/api/users',        require('./routes/users'));
+app.use('/api/leads',        require('./routes/leads'));
+app.use('/api/followups',    require('./routes/followups'));
+app.use('/api/dashboard',    require('./routes/dashboard'));
 app.use('/api/notifications',require('./routes/notifications'));
-app.use('/api/profile',     require('./routes/profile'));
+app.use('/api/profile',      require('./routes/profile'));
+app.use('/api/roles',         require('./routes/roles'));
+app.use('/api/organizations', require('./routes/organizations'));
+app.use('/api/plans',         require('./routes/plans'));
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'OK', timestamp: new Date() }));

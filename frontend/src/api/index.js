@@ -48,6 +48,33 @@ export const dashboardAPI = {
   getActivity: () => api.get('/dashboard/activity'),
 };
 
+// ─── Plans ────────────────────────────────────────────────────────────────────
+export const plansAPI = {
+  getAll:  ()         => api.get('/plans'),
+  create:  (data)     => api.post('/plans', data),
+  update:  (id, data) => api.put(`/plans/${id}`, data),
+  delete:  (id)       => api.delete(`/plans/${id}`),
+};
+
+// ─── Organizations (Superadmin) ───────────────────────────────────────────────
+export const orgsAPI = {
+  getAll:       (params) => api.get('/organizations', { params }),
+  getOne:       (id)     => api.get(`/organizations/${id}`),
+  getStats:     ()       => api.get('/organizations/stats'),
+  create:       (data)   => api.post('/organizations', data),
+  update:       (id, d)  => api.put(`/organizations/${id}`, d),
+  updateStatus: (id, d)  => api.put(`/organizations/${id}/status`, d),
+  delete:       (id)     => api.delete(`/organizations/${id}`),
+};
+
+// ─── Roles ────────────────────────────────────────────────────────────────────
+export const rolesAPI = {
+  getAll:  ()        => api.get('/roles'),
+  create:  (data)    => api.post('/roles', data),
+  update:  (id, data)=> api.put(`/roles/${id}`, data),
+  delete:  (id)      => api.delete(`/roles/${id}`),
+};
+
 // ─── Notifications ────────────────────────────────────────────────────────────
 export const notificationsAPI = {
   getAll:      (params) => api.get('/notifications', { params }),

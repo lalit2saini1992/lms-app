@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const { getLeads, getLead, createLead, updateLead, assignLead, deleteLead, importLeads } = require('../controllers/leadController');
 const { protect, requirePermission } = require('../middleware/auth');
+const { orgScope, checkLeadLimit } = require('../middleware/orgIsolation');
 
 // Multer config for Excel uploads
 const storage = multer.diskStorage({
@@ -18,14 +19,15 @@ const upload = multer({
     if (allowed.includes(ext)) cb(null, true);
     else cb(new Error('Only .xls and .xlsx files are allowed'));
   },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 router.use(protect);
+router.use(orgScope); // Apply org isolation to all lead routes
 
 router.get('/', getLeads);
 router.get('/:id', getLead);
-router.post('/', requirePermission('canAddLead'), createLead);
+router.post('/', requirePermission('canAddLead'), checkLeadLimit, createLead);
 router.post('/import', requirePermission('canImportLead'), upload.single('file'), importLeads);
 router.put('/:id', requirePermission('canEditLead'), updateLead);
 router.put('/:id/assign', requirePermission('canAssignLead'), assignLead);

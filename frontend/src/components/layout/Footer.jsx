@@ -34,7 +34,7 @@ export default function Footer() {
               backgroundClip: 'text',
             }}
           >
-            Kiro
+            Lalit
           </span>
         </p>
       </div>
