@@ -58,6 +58,7 @@ app.use('/api/profile',      require('./routes/profile'));
 app.use('/api/roles',         require('./routes/roles'));
 app.use('/api/organizations', require('./routes/organizations'));
 app.use('/api/plans',         require('./routes/plans'));
+app.use('/api/activity-logs', require('./routes/activityLogs'));
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'OK', timestamp: new Date() }));

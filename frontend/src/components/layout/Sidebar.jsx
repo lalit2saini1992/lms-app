@@ -3,11 +3,11 @@ import useAuthStore from '../../store/authStore';
 
 const navItems = [
   { to: '/dashboard',      icon: '⚡', label: 'Dashboard' },
-  { to: '/leads',          icon: '👥', label: 'Leads',           hideForSuperadmin: true },
+  { to: '/leads',          icon: '👥', label: 'Leads' },           // visible to all
   { to: '/organizations',  icon: '🏢', label: 'Organizations',   superadminOnly: true },
   { to: '/plans',          icon: '💳', label: 'Plans',           superadminOnly: true },
-  { to: '/reports',        icon: '📊', label: 'Reports',         permission: 'canViewReports', hideForSuperadmin: true },
-  { to: '/users',          icon: '👤', label: 'Users',           permission: 'canManageUsers', hideForSuperadmin: true },
+  { to: '/users',          icon: '👤', label: 'Users',           permission: 'canManageUsers' },
+  { to: '/reports',        icon: '📊', label: 'Reports',         permission: 'canViewReports' },
   { to: '/roles',          icon: '🛡️', label: 'Roles',           permission: 'canManageUsers', hideForSuperadmin: true },
   { to: '/followup-types', icon: '🏷️', label: 'Follow-up Types', permission: 'canManageFollowupTypes', hideForSuperadmin: true },
 ];

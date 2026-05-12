@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { followupsAPI } from '../api';
 import toast from 'react-hot-toast';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 const PRESET_COLORS = ['#7c3aed','#6366f1','#2563eb','#0891b2','#059669','#16a34a','#d97706','#ea580c','#dc2626','#db2777','#64748b'];
 
@@ -23,6 +24,7 @@ export default function FollowUpTypesPage() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm]           = useState(initialForm);
   const [editId, setEditId]       = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // type object
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -121,7 +123,7 @@ export default function FollowUpTypesPage() {
                 <button onClick={() => openModal(type)}
                   className="btn-secondary text-xs flex-1 py-1.5">✏️ Edit</button>
                 <button
-                  onClick={() => { if (window.confirm(`Delete "${type.label}"?`)) deleteMutation.mutate(type._id); }}
+                  onClick={() => setConfirmDelete(type)}
                   className="btn-danger text-xs flex-1 py-1.5">🗑️ Delete</button>
               </div>
             </div>
@@ -193,6 +195,19 @@ export default function FollowUpTypesPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Follow-up Type Confirm Modal */}
+      <ConfirmModal
+        isOpen={!!confirmDelete}
+        title="Delete Follow-up Type?"
+        message={`"${confirmDelete?.label}" will be removed from all future follow-ups.`}
+        confirmLabel="Delete"
+        confirmClass="btn-danger"
+        icon="🏷️"
+        loading={deleteMutation.isPending}
+        onConfirm={() => { deleteMutation.mutate(confirmDelete._id); setConfirmDelete(null); }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

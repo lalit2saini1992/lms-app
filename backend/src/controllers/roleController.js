@@ -1,5 +1,6 @@
 const Role = require('../models/Role');
 const User = require('../models/User');
+const { logActivity } = require('../utils/activityLogger');
 
 // @desc  Get all roles
 // @route GET /api/roles
@@ -32,6 +33,15 @@ const createRole = async (req, res) => {
       createdBy: req.user._id,
     });
 
+    await logActivity({
+      action: 'role_created',
+      performedBy: req.user,
+      targetId: role._id,
+      targetType: 'Role',
+      targetName: role.label,
+      ip: req.ip,
+    });
+
     res.status(201).json({ success: true, role });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -56,6 +66,15 @@ const updateRole = async (req, res) => {
       { customRole: role._id },
       { permissions: role.permissions }
     );
+
+    await logActivity({
+      action: 'role_updated',
+      performedBy: req.user,
+      targetId: role._id,
+      targetType: 'Role',
+      targetName: role.label,
+      ip: req.ip,
+    });
 
     res.json({ success: true, role });
   } catch (error) {
@@ -82,6 +101,16 @@ const deleteRole = async (req, res) => {
 
     role.isActive = false;
     await role.save();
+
+    await logActivity({
+      action: 'role_deleted',
+      performedBy: req.user,
+      targetId: role._id,
+      targetType: 'Role',
+      targetName: role.label,
+      ip: req.ip,
+    });
+
     res.json({ success: true, message: 'Role deleted' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

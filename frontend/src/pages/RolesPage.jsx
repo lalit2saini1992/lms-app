@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { rolesAPI } from '../api';
 import toast from 'react-hot-toast';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 const PERMISSIONS = [
   { key: 'canAddLead',             label: 'Add Lead',               icon: '➕' },
@@ -40,6 +41,7 @@ export default function RolesPage() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm]           = useState({ label: '', permissions: { ...defaultPerms } });
   const [editId, setEditId]       = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // role object
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -156,7 +158,7 @@ export default function RolesPage() {
                   </button>
                   {!role.isSystem && (
                     <button
-                      onClick={() => { if (window.confirm(`Delete role "${role.label}"?`)) deleteMutation.mutate(role._id); }}
+                      onClick={() => setConfirmDelete(role)}
                       className="btn-danger text-xs flex-1 py-1.5">
                       🗑️ Delete
                     </button>
@@ -248,6 +250,19 @@ export default function RolesPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Role Confirm Modal */}
+      <ConfirmModal
+        isOpen={!!confirmDelete}
+        title="Delete Role?"
+        message={`Role "${confirmDelete?.label}" will be permanently removed.`}
+        confirmLabel="Delete"
+        confirmClass="btn-danger"
+        icon="🗑️"
+        loading={deleteMutation.isPending}
+        onConfirm={() => { deleteMutation.mutate(confirmDelete._id); setConfirmDelete(null); }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

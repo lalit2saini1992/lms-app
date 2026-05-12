@@ -11,15 +11,17 @@ const getProfile = async (req, res) => {
   }
 };
 
-// @desc  Update my profile
+// @desc  Update my profile — only name and phone allowed
 // @route PUT /api/profile
 const updateProfile = async (req, res) => {
   try {
-    const { name, phone } = req.body;
-    const user = await User.findById(req.user._id);
+    const { name } = req.body; // only name allowed
+    if (!name?.trim()) {
+      return res.status(400).json({ success: false, message: 'Name is required' });
+    }
 
-    if (name) user.name = name;
-    if (phone) user.phone = phone;
+    const user = await User.findById(req.user._id);
+    user.name = name.trim();
     await user.save();
 
     res.json({

@@ -8,6 +8,7 @@ import {
   getWhatsAppLink, getCallLink, getMailLink, communicationIcons,
 } from '../utils/helpers';
 import toast from 'react-hot-toast';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 export default function LeadDetailPage() {
   const { id } = useParams();
@@ -17,6 +18,7 @@ export default function LeadDetailPage() {
 
   const [showFUForm, setShowFUForm]   = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [fuForm, setFuForm] = useState({ followUpTypeId: '', communicationMethod: 'call', remark: '', nextFollowUpDate: '' });
   const [editForm, setEditForm] = useState({});
 
@@ -81,9 +83,7 @@ export default function LeadDetailPage() {
   };
 
   const handleDelete = () => {
-    if (window.confirm(`Delete lead "${lead.name}"? This cannot be undone.`)) {
-      deleteMutation.mutate();
-    }
+    setShowDeleteConfirm(true);
   };
 
   const handleFUSubmit = (e) => {
@@ -371,6 +371,19 @@ export default function LeadDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Lead Confirm Modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Delete Lead?"
+        message={`"${lead?.name}" will be soft deleted and removed from the list. This cannot be undone.`}
+        confirmLabel="Delete Lead"
+        confirmClass="btn-danger"
+        icon="🗑️"
+        loading={deleteMutation.isPending}
+        onConfirm={() => { deleteMutation.mutate(); setShowDeleteConfirm(false); }}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }

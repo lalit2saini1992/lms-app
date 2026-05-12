@@ -63,7 +63,7 @@ export default function ProfilePage() {
   const handleInfoSubmit = (e) => {
     e.preventDefault();
     if (!infoForm.name.trim()) return toast.error('Name is required');
-    updateMutation.mutate(infoForm);
+    updateMutation.mutate({ name: infoForm.name.trim() });
   };
 
   const handlePassSubmit = (e) => {
@@ -163,26 +163,17 @@ export default function ProfilePage() {
                 <input className="input" value={infoForm.name}
                   onChange={e => setInfoForm({ ...infoForm, name: e.target.value })} required />
               </div>
+              {/* Email — read only, cannot change */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
-                  style={{ color: 'var(--text-muted)' }}>Phone</label>
-                <input className="input" placeholder="9876543210"
-                  value={infoForm.phone}
-                  onChange={e => setInfoForm({ ...infoForm, phone: e.target.value })} />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
-                  style={{ color: 'var(--text-muted)' }}>Email</label>
+                  style={{ color: 'var(--text-muted)' }}>Email (cannot change)</label>
                 <input className="input" value={user?.email} disabled
                   style={{ opacity: 0.5, cursor: 'not-allowed' }} />
-                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  Email cannot be changed
-                </p>
               </div>
               <div className="flex gap-3">
                 <button type="submit" className="btn-primary flex-1"
                   disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? 'Saving...' : '✓ Save Changes'}
+                  {updateMutation.isPending ? 'Saving...' : '✓ Save Name'}
                 </button>
                 <button type="button" className="btn-secondary flex-1"
                   onClick={() => setEditInfo(false)}>
@@ -195,7 +186,6 @@ export default function ProfilePage() {
               {[
                 { label: 'Full Name', value: user?.name },
                 { label: 'Email',     value: user?.email },
-                { label: 'Phone',     value: user?.phone || '—' },
                 { label: 'Role',      value: user?.role },
               ].map(row => (
                 <div key={row.label}

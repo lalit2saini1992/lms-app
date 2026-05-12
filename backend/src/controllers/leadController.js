@@ -3,23 +3,33 @@ const xlsx = require('xlsx');
 const path = require('path');
 const fs = require('fs');
 const { createNotification } = require('./notificationController');
+const { logActivity } = require('../utils/activityLogger');
 
 // @desc    Get all leads (with filters)
 // @route   GET /api/leads
 const getLeads = async (req, res) => {
   try {
-    const { status, assignedTo, search, source, startDate, endDate, page = 1, limit = 20 } = req.query;
-    const filter = { isActive: true, ...req.orgFilter };
+    const { status, assignedTo, search, source, startDate, endDate, orgId, page = 1, limit = 20 } = req.query;
 
-    // Employees only see their assigned leads
-    if (req.user.role === 'employee') {
-      filter.assignedTo = req.user._id;
+    // Superadmin — can see all orgs or filter by orgId
+    let filter = { isActive: true };
+    if (req.user.role === 'superadmin') {
+      if (orgId) filter.organization = orgId;
+      // else no org filter — see all
     } else {
-      if (assignedTo) filter.assignedTo = assignedTo;
+      // Apply org isolation
+      filter = { isActive: true, ...req.orgFilter };
+      // Employees only see their assigned leads
+      if (req.user.role === 'employee') {
+        filter.assignedTo = req.user._id;
+      } else {
+        if (assignedTo) filter.assignedTo = assignedTo;
+      }
     }
 
     if (status) filter.status = status;
     if (source) filter.source = source;
+    if (assignedTo && req.user.role !== 'employee') filter.assignedTo = assignedTo;
 
     if (search) {
       filter.$or = [
@@ -32,21 +42,21 @@ const getLeads = async (req, res) => {
     if (startDate || endDate) {
       filter.createdAt = {};
       if (startDate) filter.createdAt.$gte = new Date(startDate);
-      if (endDate) filter.createdAt.$lte = new Date(endDate);
+      if (endDate)   filter.createdAt.$lte = new Date(endDate);
     }
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const skip  = (parseInt(page) - 1) * parseInt(limit);
     const total = await Lead.countDocuments(filter);
     const leads = await Lead.find(filter)
       .populate('assignedTo', 'name email phone')
       .populate('createdBy', 'name email')
+      .populate('organization', 'name')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
 
     res.json({
-      success: true,
-      total,
+      success: true, total,
       page: parseInt(page),
       pages: Math.ceil(total / parseInt(limit)),
       leads,
@@ -90,6 +100,17 @@ const createLead = async (req, res) => {
     });
 
     const populated = await lead.populate('assignedTo', 'name email');
+
+    await logActivity({
+      action: 'lead_created',
+      performedBy: req.user,
+      targetId: lead._id,
+      targetType: 'Lead',
+      targetName: lead.name,
+      details: { phone: lead.phone, source: lead.source },
+      ip: req.ip,
+    });
+
     res.status(201).json({ success: true, lead: populated });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -106,11 +127,26 @@ const updateLead = async (req, res) => {
     }
 
     const allowedFields = ['name', 'phone', 'email', 'source', 'status', 'notes', 'address', 'city', 'product', 'budget', 'nextFollowUpDate'];
+    const changes = {};
     allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) lead[field] = req.body[field];
+      if (req.body[field] !== undefined) {
+        changes[field] = { from: lead[field], to: req.body[field] };
+        lead[field] = req.body[field];
+      }
     });
 
     await lead.save();
+
+    await logActivity({
+      action: 'lead_updated',
+      performedBy: req.user,
+      targetId: lead._id,
+      targetType: 'Lead',
+      targetName: lead.name,
+      details: { changes },
+      ip: req.ip,
+    });
+
     res.json({ success: true, lead });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -121,12 +157,18 @@ const updateLead = async (req, res) => {
 // @route   PUT /api/leads/:id/assign
 const assignLead = async (req, res) => {
   try {
+    // Superadmin cannot assign leads (disabled)
+    if (req.user.role === 'superadmin') {
+      return res.status(403).json({ success: false, message: 'Superadmin cannot assign leads. Please use an org admin account.' });
+    }
+
     const { assignedTo } = req.body;
     const lead = await Lead.findById(req.params.id);
     if (!lead || !lead.isActive) {
       return res.status(404).json({ success: false, message: 'Lead not found' });
     }
 
+    const prevAssignee = lead.assignedTo;
     lead.assignedTo = assignedTo;
     lead.status = 'assigned';
     await lead.save();
@@ -141,6 +183,16 @@ const assignLead = async (req, res) => {
       type: 'lead_assigned',
       link: `/leads/${lead._id}`,
       createdBy: req.user._id,
+    });
+
+    await logActivity({
+      action: 'lead_assigned',
+      performedBy: req.user,
+      targetId: lead._id,
+      targetType: 'Lead',
+      targetName: lead.name,
+      details: { assignedTo, prevAssignee },
+      ip: req.ip,
     });
 
     res.json({ success: true, lead: populated });
@@ -158,6 +210,16 @@ const deleteLead = async (req, res) => {
 
     lead.isActive = false;
     await lead.save();
+
+    await logActivity({
+      action: 'lead_deleted',
+      performedBy: req.user,
+      targetId: lead._id,
+      targetType: 'Lead',
+      targetName: lead.name,
+      details: { phone: lead.phone, status: lead.status },
+      ip: req.ip,
+    });
 
     res.json({ success: true, message: 'Lead deleted' });
   } catch (error) {
@@ -194,6 +256,7 @@ const importLeads = async (req, res) => {
       product: row['Product'] || row['product'] || '',
       budget: row['Budget'] || row['budget'] || '',
       createdBy: req.user._id,
+      organization: req.orgId || null,
       importBatch,
     })).filter((l) => l.name && l.phone);
 
@@ -205,6 +268,15 @@ const importLeads = async (req, res) => {
 
     // Clean up uploaded file
     fs.unlinkSync(req.file.path);
+
+    await logActivity({
+      action: 'lead_imported',
+      performedBy: req.user,
+      targetType: 'Lead',
+      targetName: `Batch: ${importBatch}`,
+      details: { count: inserted.length, importBatch },
+      ip: req.ip,
+    });
 
     res.status(201).json({
       success: true,

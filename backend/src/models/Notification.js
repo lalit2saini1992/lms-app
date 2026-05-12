@@ -7,7 +7,7 @@ const notificationSchema = new mongoose.Schema(
     message: { type: String, required: true },
     type: {
       type: String,
-      enum: ['lead_assigned', 'followup_due', 'lead_converted', 'new_lead', 'general'],
+      enum: ['lead_assigned', 'followup_due', 'lead_converted', 'new_lead', 'followup_update', 'general'],
       default: 'general',
     },
     link: { type: String }, // e.g. /leads/:id

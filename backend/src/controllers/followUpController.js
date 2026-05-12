@@ -1,6 +1,9 @@
 const FollowUp = require('../models/FollowUp');
 const FollowUpType = require('../models/FollowUpType');
 const Lead = require('../models/Lead');
+const User = require('../models/User');
+const { logActivity } = require('../utils/activityLogger');
+const { createNotification } = require('./notificationController');
 
 // ─── Follow-Up Types ──────────────────────────────────────────────────────────
 
@@ -21,6 +24,16 @@ const createFollowUpType = async (req, res) => {
   try {
     const { label, color, description } = req.body;
     const type = await FollowUpType.create({ label, color, description, createdBy: req.user._id });
+
+    await logActivity({
+      action: 'followup_type_created',
+      performedBy: req.user,
+      targetId: type._id,
+      targetType: 'FollowUpType',
+      targetName: type.label,
+      ip: req.ip,
+    });
+
     res.status(201).json({ success: true, type });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -33,6 +46,16 @@ const updateFollowUpType = async (req, res) => {
   try {
     const type = await FollowUpType.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!type) return res.status(404).json({ success: false, message: 'Type not found' });
+
+    await logActivity({
+      action: 'followup_type_updated',
+      performedBy: req.user,
+      targetId: type._id,
+      targetType: 'FollowUpType',
+      targetName: type.label,
+      ip: req.ip,
+    });
+
     res.json({ success: true, type });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -45,6 +68,16 @@ const deleteFollowUpType = async (req, res) => {
   try {
     const type = await FollowUpType.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
     if (!type) return res.status(404).json({ success: false, message: 'Type not found' });
+
+    await logActivity({
+      action: 'followup_type_deleted',
+      performedBy: req.user,
+      targetId: type._id,
+      targetType: 'FollowUpType',
+      targetName: type.label,
+      ip: req.ip,
+    });
+
     res.json({ success: true, message: 'Follow-up type deleted' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -117,6 +150,47 @@ const createFollowUp = async (req, res) => {
       { path: 'followUpType', select: 'label color' },
       { path: 'doneBy', select: 'name email' },
     ]);
+
+    // Notify upper-level users in the same org (managers, admins, orgadmin)
+    // Only if follow-up was done by an employee (not self-notification)
+    if (req.user.role === 'employee' || req.user.role === 'manager') {
+      const orgId = req.user.organization;
+      if (orgId) {
+        const upperRoles = req.user.role === 'employee'
+          ? ['manager', 'admin', 'orgadmin']
+          : ['admin', 'orgadmin'];
+
+        const upperUsers = await User.find({
+          organization: orgId,
+          role: { $in: upperRoles },
+          isActive: true,
+        }).select('_id');
+
+        const followUpTypeDoc = await FollowUpType.findById(followUpTypeId).select('label');
+        const typeLabel = followUpTypeDoc?.label || 'Follow-up';
+
+        await Promise.all(upperUsers.map(u =>
+          createNotification({
+            userId: u._id,
+            title: 'Follow-up Updated',
+            message: `${req.user.name} logged "${typeLabel}" on lead "${lead.name}" (${lead.phone})`,
+            type: 'followup_update',
+            link: `/leads/${leadId}`,
+            createdBy: req.user._id,
+          })
+        ));
+      }
+    }
+
+    await logActivity({
+      action: 'followup_created',
+      performedBy: req.user,
+      targetId: followUp._id,
+      targetType: 'FollowUp',
+      targetName: `Follow-up on lead: ${lead.name}`,
+      details: { leadId, communicationMethod, followUpTypeId },
+      ip: req.ip,
+    });
 
     res.status(201).json({ success: true, followUp: populated });
   } catch (error) {

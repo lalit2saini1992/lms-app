@@ -1,12 +1,14 @@
 const Notification = require('../models/Notification');
+const User = require('../models/User');
 
-// @desc  Get notifications for logged-in user
+// @desc  Get notifications for logged-in user (org isolated)
 // @route GET /api/notifications
 const getNotifications = async (req, res) => {
   try {
     const { page = 1, limit = 20 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
+    // Only show notifications for this user — already user-scoped, no cross-org leak
     const [notifications, total, unreadCount] = await Promise.all([
       Notification.find({ user: req.user._id })
         .populate('createdBy', 'name')

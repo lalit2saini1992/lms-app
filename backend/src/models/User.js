@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
       enum: ['superadmin', 'admin', 'manager', 'employee', 'custom', 'orgadmin'],
       default: 'employee',
     },
-    customRole: { type: mongoose.Schema.Types.ObjectId, ref: 'Role', default: null },
+    customRole:   { type: mongoose.Schema.Types.ObjectId, ref: 'Role',         default: null },
     organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', default: null },
     permissions: {
       canAddLead: { type: Boolean, default: false },
@@ -23,6 +23,7 @@ const userSchema = new mongoose.Schema(
       canViewReports: { type: Boolean, default: false },
       canManageUsers: { type: Boolean, default: false },
       canManageFollowupTypes: { type: Boolean, default: false },
+      canManageOrganizations: { type: Boolean, default: false }, // superadmin only
     },
     isActive: { type: Boolean, default: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -49,21 +50,31 @@ userSchema.methods.setDefaultPermissions = function () {
       canAddLead: true, canEditLead: true, canDeleteLead: true,
       canAssignLead: true, canImportLead: true, canViewReports: true,
       canManageUsers: true, canManageFollowupTypes: true,
+      canManageOrganizations: true,
     },
     admin: {
       canAddLead: true, canEditLead: true, canDeleteLead: true,
       canAssignLead: true, canImportLead: true, canViewReports: true,
       canManageUsers: true, canManageFollowupTypes: true,
+      canManageOrganizations: false,
+    },
+    orgadmin: {
+      canAddLead: true, canEditLead: true, canDeleteLead: true,
+      canAssignLead: true, canImportLead: true, canViewReports: true,
+      canManageUsers: true, canManageFollowupTypes: true,
+      canManageOrganizations: false,
     },
     manager: {
       canAddLead: true, canEditLead: true, canDeleteLead: false,
       canAssignLead: true, canImportLead: true, canViewReports: true,
       canManageUsers: false, canManageFollowupTypes: false,
+      canManageOrganizations: false,
     },
     employee: {
       canAddLead: false, canEditLead: false, canDeleteLead: false,
       canAssignLead: false, canImportLead: false, canViewReports: false,
       canManageUsers: false, canManageFollowupTypes: false,
+      canManageOrganizations: false,
     },
   };
   this.permissions = rolePermissions[this.role] || rolePermissions.employee;

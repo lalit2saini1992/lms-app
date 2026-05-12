@@ -4,6 +4,7 @@ const Lead = require('../models/Lead');
 const FollowUp = require('../models/FollowUp');
 const Plan = require('../models/Plan');
 const { calcExpiry, DURATION_MONTHS } = require('./planController');
+const { logActivity } = require('../utils/activityLogger');
 
 // @desc  Get all organizations (superadmin only)
 // @route GET /api/organizations
@@ -34,7 +35,7 @@ const getOrganizations = async (req, res) => {
   }
 };
 
-// @desc  Get single organization
+// @desc  Get single organization with leads + employees
 // @route GET /api/organizations/:id
 const getOrganization = async (req, res) => {
   try {
@@ -42,12 +43,27 @@ const getOrganization = async (req, res) => {
     if (!org) return res.status(404).json({ success: false, message: 'Organization not found' });
 
     const [employees, leads, admins] = await Promise.all([
-      User.countDocuments({ organization: org._id, isActive: true, role: { $ne: 'orgadmin' } }),
-      Lead.countDocuments({ organization: org._id, isActive: true }),
+      User.find({ organization: org._id, isActive: true, role: { $ne: 'orgadmin' } })
+        .select('name email phone role isActive createdAt')
+        .sort({ createdAt: -1 }),
+      Lead.find({ organization: org._id, isActive: true })
+        .populate('assignedTo', 'name')
+        .sort({ createdAt: -1 })
+        .limit(50),
       User.find({ organization: org._id, role: 'orgadmin' }).select('name email phone isActive'),
     ]);
 
-    res.json({ success: true, organization: { ...org.toObject(), currentEmployees: employees, currentLeads: leads }, admins });
+    res.json({
+      success: true,
+      organization: {
+        ...org.toObject(),
+        currentEmployees: employees.length,
+        currentLeads: leads.length,
+      },
+      admins,
+      employees,
+      leads,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -119,6 +135,16 @@ const createOrganization = async (req, res) => {
     };
     await orgAdmin.save();
 
+    await logActivity({
+      action: 'org_created',
+      performedBy: req.user,
+      targetId: org._id,
+      targetType: 'Organization',
+      targetName: org.name,
+      details: { adminEmail, plan: planName, duration },
+      ip: req.ip,
+    });
+
     res.status(201).json({
       success: true,
       organization: org,
@@ -150,6 +176,17 @@ const updateOrganization = async (req, res) => {
     if (maxLeads)    org.maxLeads    = maxLeads;
 
     await org.save();
+
+    await logActivity({
+      action: 'org_updated',
+      performedBy: req.user,
+      targetId: org._id,
+      targetType: 'Organization',
+      targetName: org.name,
+      details: { updatedFields: Object.keys(req.body) },
+      ip: req.ip,
+    });
+
     res.json({ success: true, organization: org });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -171,11 +208,23 @@ const updateStatus = async (req, res) => {
       await User.updateMany({ organization: org._id }, { isActive: true });
     }
 
+    await logActivity({
+      action: 'org_status_changed',
+      performedBy: req.user,
+      targetId: org._id,
+      targetType: 'Organization',
+      targetName: org.name,
+      details: { status },
+      ip: req.ip,
+    });
+
     res.json({ success: true, organization: org, message: `Organization ${status}` });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc  Delete organization (and all data)
 
 // @desc  Delete organization (and all data)
 // @route DELETE /api/organizations/:id
@@ -190,6 +239,17 @@ const deleteOrganization = async (req, res) => {
       Lead.deleteMany({ organization: org._id }),
       FollowUp.deleteMany({ organization: org._id }),
     ]);
+
+    await logActivity({
+      action: 'org_deleted',
+      performedBy: req.user,
+      targetId: org._id,
+      targetType: 'Organization',
+      targetName: org.name,
+      details: { permanentDelete: true },
+      ip: req.ip,
+    });
+
     await org.deleteOne();
 
     res.json({ success: true, message: 'Organization and all data deleted' });

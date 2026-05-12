@@ -7,7 +7,14 @@ const User = require('../models/User');
 const getStats = async (req, res) => {
   try {
     const isEmployee = req.user.role === 'employee';
-    const leadFilter = isEmployee ? { assignedTo: req.user._id, isActive: true } : { isActive: true };
+    const isSuperadmin = req.user.role === 'superadmin';
+
+    // Apply org isolation for non-superadmin users
+    const orgFilter = isSuperadmin ? {} : (req.orgFilter || {});
+
+    const leadFilter = isEmployee
+      ? { assignedTo: req.user._id, isActive: true, ...orgFilter }
+      : { isActive: true, ...orgFilter };
     const followUpFilter = isEmployee ? { doneBy: req.user._id } : {};
 
     const [
@@ -64,7 +71,11 @@ const getStats = async (req, res) => {
 // @route   GET /api/dashboard/chart
 const getChartData = async (req, res) => {
   try {
-    const filter = req.user.role === 'employee' ? { assignedTo: req.user._id, isActive: true } : { isActive: true };
+    const isSuperadmin = req.user.role === 'superadmin';
+    const orgFilter = isSuperadmin ? {} : (req.orgFilter || {});
+    const filter = req.user.role === 'employee'
+      ? { assignedTo: req.user._id, isActive: true, ...orgFilter }
+      : { isActive: true, ...orgFilter };
 
     const statusData = await Lead.aggregate([
       { $match: filter },

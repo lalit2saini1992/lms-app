@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { orgsAPI, plansAPI } from '../api';
-import { formatDate } from '../utils/helpers';
+import { formatDate, statusColors, statusLabels } from '../utils/helpers';
 import toast from 'react-hot-toast';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 const DURATIONS = [
   { key: 'quarterly',  label: 'Quarterly',   sub: '3 months'  },
@@ -27,9 +28,11 @@ const initialForm = {
 export default function OrganizationsPage() {
   const [showModal, setShowModal]   = useState(false);
   const [showDetail, setShowDetail] = useState(null);
+  const [detailTab, setDetailTab]   = useState('overview');
   const [form, setForm]             = useState(initialForm);
   const [editId, setEditId]         = useState(null);
   const [activeTab, setActiveTab]   = useState('info');
+  const [confirmDeleteOrg, setConfirmDeleteOrg] = useState(false);
   const qc = useQueryClient();
 
   // ── Queries ──────────────────────────────────────────────────────────────────
@@ -197,7 +200,7 @@ export default function OrganizationsPage() {
 
             return (
               <div key={org._id} className="card hover:shadow-md transition-all cursor-pointer"
-                onClick={() => setShowDetail(org._id)}>
+                onClick={() => { setDetailTab('overview'); setShowDetail(org._id); }}>
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-lg flex-shrink-0"
@@ -262,13 +265,19 @@ export default function OrganizationsPage() {
       {/* ── Detail Modal ─────────────────────────────────────────────────────── */}
       {showDetail && detailData && (
         <div className="modal-overlay">
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '640px' }}>
             <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1 sm:hidden" style={{ backgroundColor: 'var(--border)' }} />
+
+            {/* Header */}
             <div className="px-6 pt-5 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                  {detailData.organization?.name}
-                </h3>
+                <div>
+                  <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                    {detailData.organization?.name}
+                  </h3>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{detailData.organization?.email}</p>
+                </div>
                 <div className="flex items-center gap-2">
                   <span className={`badge ${STATUS_COLORS[detailData.organization?.status] || ''}`}>
                     {detailData.organization?.status}
@@ -278,45 +287,107 @@ export default function OrganizationsPage() {
                     style={{ backgroundColor: 'var(--bg-card2)', color: 'var(--text-muted)' }}>✕</button>
                 </div>
               </div>
-            </div>
 
-            <div className="px-6 py-4 space-y-4 max-h-96 overflow-y-auto">
-              {/* Admins */}
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Org Admins</p>
-                {(detailData.admins || []).map(a => (
-                  <div key={a._id} className="flex items-center gap-3 p-2.5 rounded-xl mb-1"
-                    style={{ backgroundColor: 'var(--bg-card2)' }}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                      style={{ background: 'linear-gradient(135deg,#7c3aed,#6366f1)' }}>
-                      {a.name[0]}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{a.name}</p>
-                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{a.email}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Info */}
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: 'Plan',      value: detailData.organization?.planName || '—' },
-                  { label: 'Duration',  value: detailData.organization?.planDuration || '—' },
-                  { label: 'Expires',   value: formatDate(detailData.organization?.expiresAt) },
-                  { label: 'Employees', value: `${detailData.organization?.currentEmployees || 0}/${detailData.organization?.maxEmployees}` },
-                  { label: 'Leads',     value: `${detailData.organization?.currentLeads || 0}/${detailData.organization?.maxLeads}` },
-                  { label: 'Status',    value: detailData.organization?.status },
-                ].map(r => (
-                  <div key={r.label} className="p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-card2)' }}>
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{r.label}</p>
-                    <p className="font-bold text-sm mt-0.5 capitalize" style={{ color: 'var(--text-primary)' }}>{r.value}</p>
-                  </div>
+              {/* Detail Tabs */}
+              <div className="flex gap-1 mt-3">
+                {['overview', 'employees', 'leads'].map(tab => (
+                  <button key={tab} onClick={() => setDetailTab(tab)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all"
+                    style={{
+                      backgroundColor: detailTab === tab ? 'var(--accent-light)' : 'transparent',
+                      color: detailTab === tab ? 'var(--accent)' : 'var(--text-muted)',
+                    }}>
+                    {tab === 'overview' ? '📊 Overview' : tab === 'employees' ? `👤 Employees (${detailData.employees?.length || 0})` : `👥 Leads (${detailData.leads?.length || 0})`}
+                  </button>
                 ))}
               </div>
             </div>
 
+            <div className="px-6 py-4 max-h-80 overflow-y-auto">
+
+              {/* Overview Tab */}
+              {detailTab === 'overview' && (
+                <div className="space-y-4">
+                  {/* Admins */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Org Admins</p>
+                    {(detailData.admins || []).map(a => (
+                      <div key={a._id} className="flex items-center gap-3 p-2.5 rounded-xl mb-1"
+                        style={{ backgroundColor: 'var(--bg-card2)' }}>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                          style={{ background: 'linear-gradient(135deg,#7c3aed,#6366f1)' }}>
+                          {a.name[0]}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{a.name}</p>
+                          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{a.email}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: 'Plan',      value: detailData.organization?.planName || '—' },
+                      { label: 'Duration',  value: detailData.organization?.planDuration || '—' },
+                      { label: 'Expires',   value: formatDate(detailData.organization?.expiresAt) },
+                      { label: 'Employees', value: `${detailData.employees?.length || 0}/${detailData.organization?.maxEmployees}` },
+                      { label: 'Leads',     value: `${detailData.leads?.length || 0}/${detailData.organization?.maxLeads}` },
+                      { label: 'Status',    value: detailData.organization?.status },
+                    ].map(r => (
+                      <div key={r.label} className="p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-card2)' }}>
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{r.label}</p>
+                        <p className="font-bold text-sm mt-0.5 capitalize" style={{ color: 'var(--text-primary)' }}>{r.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Employees Tab */}
+              {detailTab === 'employees' && (
+                <div className="space-y-2">
+                  {(detailData.employees || []).length === 0 ? (
+                    <p className="text-sm text-center py-6" style={{ color: 'var(--text-muted)' }}>No employees yet</p>
+                  ) : (detailData.employees || []).map(emp => (
+                    <div key={emp._id} className="flex items-center gap-3 p-3 rounded-xl"
+                      style={{ backgroundColor: 'var(--bg-card2)' }}>
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                        style={{ background: 'linear-gradient(135deg,#7c3aed,#6366f1)' }}>
+                        {emp.name[0].toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{emp.name}</p>
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{emp.email} · <span className="capitalize">{emp.role}</span></p>
+                      </div>
+                      <span className={`badge text-xs ${emp.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>
+                        {emp.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Leads Tab */}
+              {detailTab === 'leads' && (
+                <div className="space-y-2">
+                  {(detailData.leads || []).length === 0 ? (
+                    <p className="text-sm text-center py-6" style={{ color: 'var(--text-muted)' }}>No leads yet</p>
+                  ) : (detailData.leads || []).map(lead => (
+                    <div key={lead._id} className="flex items-center gap-3 p-3 rounded-xl"
+                      style={{ backgroundColor: 'var(--bg-card2)' }}>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.name}</p>
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{lead.phone} · {lead.assignedTo?.name || 'Unassigned'}</p>
+                      </div>
+                      <span className={`badge text-xs ${statusColors[lead.status]}`}>{statusLabels[lead.status]}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
             <div className="px-6 pb-6 space-y-2">
               <div className="flex gap-2">
                 <button className="btn-secondary flex-1 text-sm"
@@ -336,11 +407,7 @@ export default function OrganizationsPage() {
                 )}
               </div>
               <button className="btn-danger w-full text-sm"
-                onClick={() => {
-                  if (window.confirm(`Delete "${detailData.organization?.name}" and ALL its data? Cannot be undone!`)) {
-                    deleteMutation.mutate(showDetail);
-                  }
-                }}>
+                onClick={() => setConfirmDeleteOrg(true)}>
                 🗑️ Delete Organization & All Data
               </button>
             </div>
@@ -512,6 +579,20 @@ export default function OrganizationsPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Organization Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmDeleteOrg}
+        title="Delete Organization?"
+        message={`"${detailData?.organization?.name}" and ALL its users, leads, and follow-ups will be permanently deleted. This CANNOT be undone!`}
+        confirmLabel="Yes, Delete Everything"
+        cancelLabel="Cancel"
+        confirmClass="btn-danger"
+        icon="🏢"
+        loading={deleteMutation.isPending}
+        onConfirm={() => { deleteMutation.mutate(showDetail); setConfirmDeleteOrg(false); }}
+        onCancel={() => setConfirmDeleteOrg(false)}
+      />
     </div>
   );
 }

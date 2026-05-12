@@ -6,11 +6,12 @@ import { timeAgo } from '../../utils/helpers';
 import toast from 'react-hot-toast';
 
 const typeIcons = {
-  lead_assigned:  '👤',
-  followup_due:   '📅',
-  lead_converted: '✅',
-  new_lead:       '🆕',
-  general:        '🔔',
+  lead_assigned:   '👤',
+  followup_due:    '📅',
+  followup_update: '📋',
+  lead_converted:  '✅',
+  new_lead:        '🆕',
+  general:         '🔔',
 };
 
 export default function NotificationBell() {
@@ -61,14 +62,15 @@ export default function NotificationBell() {
 
   const handleClick = (n) => {
     if (!n.isRead) markReadMutation.mutate(n._id);
-    if (n.link) { navigate(n.link); setOpen(false); }
+    if (n.link) { navigate(n.link); }
+    setOpen(false); // always close on item click
   };
 
   return (
     <div className="relative" ref={ref}>
       {/* Bell Button */}
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen(prev => !prev)}
         className="relative p-2 rounded-xl transition-all"
         style={{
           backgroundColor: open ? 'var(--accent-light)' : 'var(--bg-card2)',
@@ -90,98 +92,120 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {/* Dropdown */}
+      {/* Dropdown — fixed position on mobile to avoid overflow */}
       {open && (
-        <div
-          className="absolute right-0 top-12 w-80 rounded-2xl z-50 overflow-hidden"
-          style={{
-            backgroundColor: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow-lg)',
-          }}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3"
-            style={{ borderBottom: '1px solid var(--border)' }}>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
-                Notifications
-              </span>
-              {unread > 0 && (
-                <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white"
-                  style={{ background: 'linear-gradient(135deg,#7c3aed,#6366f1)' }}>
-                  {unread} new
-                </span>
-              )}
-            </div>
-            <div className="flex gap-3">
-              {unread > 0 && (
-                <button
-                  onClick={() => markAllMutation.mutate()}
-                  className="text-xs font-semibold"
-                  style={{ color: 'var(--accent)' }}>
-                  Mark all read
-                </button>
-              )}
-              {notifications.length > 0 && (
-                <button
-                  onClick={() => clearAllMutation.mutate()}
-                  className="text-xs font-semibold text-red-500">
-                  Clear all
-                </button>
-              )}
-            </div>
-          </div>
+        <>
+          {/* Mobile backdrop — tap outside to close */}
+          <div
+            className="fixed inset-0 z-40 sm:hidden"
+            onClick={() => setOpen(false)}
+          />
 
-          {/* List */}
-          <div className="max-h-80 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div className="text-center py-10">
-                <p className="text-3xl mb-2">🔔</p>
-                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  All caught up!
-                </p>
-                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  No notifications yet
-                </p>
+          <div
+            className="
+              fixed sm:absolute
+              left-2 right-2
+              sm:left-auto sm:right-0
+              top-16 sm:top-12
+              sm:w-80
+              rounded-2xl z-50 overflow-hidden
+            "
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3"
+              style={{ borderBottom: '1px solid var(--border)' }}>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
+                  Notifications
+                </span>
+                {unread > 0 && (
+                  <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white"
+                    style={{ background: 'linear-gradient(135deg,#7c3aed,#6366f1)' }}>
+                    {unread} new
+                  </span>
+                )}
               </div>
-            ) : (
-              notifications.map((n) => (
-                <div
-                  key={n._id}
-                  onClick={() => handleClick(n)}
-                  className="flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors"
-                  style={{
-                    backgroundColor: !n.isRead ? 'var(--accent-light)' : 'transparent',
-                    borderBottom: '1px solid var(--border)',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--bg-hover)'}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = !n.isRead ? 'var(--accent-light)' : 'transparent'}
-                >
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                    style={{ backgroundColor: 'var(--bg-card2)' }}>
-                    {typeIcons[n.type] || '🔔'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {n.title}
-                    </p>
-                    <p className="text-xs mt-0.5 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
-                      {n.message}
-                    </p>
-                    <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>
-                      {timeAgo(n.createdAt)}
-                    </p>
-                  </div>
-                  {!n.isRead && (
-                    <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5"
-                      style={{ backgroundColor: 'var(--accent)' }} />
-                  )}
+              <div className="flex items-center gap-3">
+                {unread > 0 && (
+                  <button
+                    onClick={() => markAllMutation.mutate()}
+                    className="text-xs font-semibold"
+                    style={{ color: 'var(--accent)' }}>
+                    Mark all read
+                  </button>
+                )}
+                {notifications.length > 0 && (
+                  <button
+                    onClick={() => clearAllMutation.mutate()}
+                    className="text-xs font-semibold text-red-500">
+                    Clear all
+                  </button>
+                )}
+                {/* Close button — visible on mobile */}
+                <button
+                  onClick={() => setOpen(false)}
+                  className="sm:hidden w-7 h-7 rounded-lg flex items-center justify-center text-sm"
+                  style={{ backgroundColor: 'var(--bg-card2)', color: 'var(--text-muted)' }}>
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
+              {notifications.length === 0 ? (
+                <div className="text-center py-10">
+                  <p className="text-3xl mb-2">🔔</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                    All caught up!
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                    No notifications yet
+                  </p>
                 </div>
-              ))
-            )}
+              ) : (
+                notifications.map((n) => (
+                  <div
+                    key={n._id}
+                    onClick={() => handleClick(n)}
+                    className="flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors"
+                    style={{
+                      backgroundColor: !n.isRead ? 'var(--accent-light)' : 'transparent',
+                      borderBottom: '1px solid var(--border)',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--bg-hover)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = !n.isRead ? 'var(--accent-light)' : 'transparent'}
+                  >
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                      style={{ backgroundColor: 'var(--bg-card2)' }}>
+                      {typeIcons[n.type] || '🔔'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                        {n.title}
+                      </p>
+                      <p className="text-xs mt-0.5 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
+                        {n.message}
+                      </p>
+                      <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>
+                        {timeAgo(n.createdAt)}
+                      </p>
+                    </div>
+                    {!n.isRead && (
+                      <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5"
+                        style={{ backgroundColor: 'var(--accent)' }} />
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
