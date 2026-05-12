@@ -115,25 +115,6 @@ export default function LoginPage() {
               ) : 'Sign In →'}
             </button>
           </form>
-
-          {/* Quick fill */}
-          <div className="mt-5 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
-            <p className="text-xs text-center mb-2" style={{ color: 'var(--text-muted)' }}>Quick fill demo</p>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { label: 'Admin',    email: 'admin@lms.com', pass: 'Admin@123' },
-                { label: 'Employee', email: 'amit@lms.com',  pass: 'Pass@123' },
-              ].map((d) => (
-                <button key={d.label} type="button"
-                  onClick={() => setForm({ email: d.email, password: d.pass })}
-                  className="text-xs rounded-xl px-3 py-2 text-left transition-all"
-                  style={{ backgroundColor: 'var(--bg-card2)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
-                  <span className="font-bold block" style={{ color: 'var(--text-primary)' }}>{d.label}</span>
-                  <span style={{ color: 'var(--text-muted)' }}>{d.email}</span>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>
