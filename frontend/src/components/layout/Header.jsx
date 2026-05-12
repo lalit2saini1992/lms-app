@@ -16,8 +16,8 @@ export default function Header({ onMenuClick }) {
   };
 
   return (
-    <header className="px-4 py-3 flex items-center justify-between sticky top-0 z-10 border-b"
-      style={{ backgroundColor: 'var(--bg-header)', borderColor: 'var(--border)' }}>
+    <header className="px-4 py-3 flex items-center justify-between top-0 z-10 border-b"
+      style={{ backgroundColor: 'var(--bg-header)', borderColor: 'var(--border)', position: 'sticky' }}>
 
       <div className="flex items-center gap-3">
         {/* Mobile hamburger */}

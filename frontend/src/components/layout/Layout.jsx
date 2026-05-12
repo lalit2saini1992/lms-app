@@ -9,20 +9,20 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden w-full" style={{ backgroundColor: 'var(--bg-base)' }}>
+    <div className="flex w-full" style={{ backgroundColor: 'var(--bg-base)', minHeight: '100dvh', height: '100%' }}>
 
       {/* Sidebar */}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main content */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <div className="flex flex-col flex-1 min-w-0" style={{ minHeight: '100dvh' }}>
         {/* Header */}
         <Header onMenuClick={() => setSidebarOpen(true)} />
 
         {/* Page content */}
         <main
-          className="flex-1 overflow-y-auto"
-          style={{ backgroundColor: 'var(--bg-base)' }}
+          className="flex-1"
+          style={{ backgroundColor: 'var(--bg-base)', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
         >
           <div className="w-full px-4 md:px-6 py-5 pb-20 lg:pb-5">
             <Outlet />

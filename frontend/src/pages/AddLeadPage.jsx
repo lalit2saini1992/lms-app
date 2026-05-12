@@ -38,7 +38,10 @@ export default function AddLeadPage() {
     mutation.mutate(form);
   };
 
-  const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+  const set = (field) => (e) => {
+    const val = e.target.value;
+    setForm(prev => ({ ...prev, [field]: val }));
+  };
   const employees = (usersData?.users || []).filter(u => ['employee', 'manager'].includes(u.role));
 
   const Field = ({ label, children }) => (

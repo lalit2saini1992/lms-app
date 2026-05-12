@@ -169,9 +169,14 @@ html.dark {
     @apply fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4;
     background: rgba(0,0,0,0.45);
     backdrop-filter: blur(4px);
+    /* Fix: allow scroll when keyboard opens on mobile */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .modal-box {
-    @apply w-full sm:max-w-lg max-h-[92vh] overflow-y-auto;
+    @apply w-full sm:max-w-lg overflow-y-auto;
+    /* Use max-height with dvh so keyboard doesn't cut off modal */
+    max-height: 92dvh;
     background-color: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 24px 24px 0 0;

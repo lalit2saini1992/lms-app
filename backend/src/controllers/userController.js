@@ -5,12 +5,13 @@ const { logActivity } = require('../utils/activityLogger');
 // @route   GET /api/users
 const getUsers = async (req, res) => {
   try {
-    const { role, isActive, search, orgId } = req.query;
+    const { role, isActive, search, orgId, noOrg } = req.query;
     const filter = {};
 
     // Superadmin — can filter by org or see all
     if (req.user.role === 'superadmin') {
       if (orgId) filter.organization = orgId;
+      else if (noOrg === 'true') filter.organization = null; // platform users only
     } else {
       // Org users see only their org users
       if (req.user.organization) filter.organization = req.user.organization;

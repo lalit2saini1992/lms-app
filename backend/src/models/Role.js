@@ -16,6 +16,7 @@ const roleSchema = new mongoose.Schema(
     },
     isSystem: { type: Boolean, default: false }, // system roles can't be deleted
     isActive: { type: Boolean, default: true },
+    organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', default: null }, // null = global (superadmin)
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }

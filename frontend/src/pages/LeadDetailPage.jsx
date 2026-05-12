@@ -216,19 +216,19 @@ export default function LeadDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="Full Name *">
                 <input className="input" value={editForm.name}
-                  onChange={e => setEditForm({ ...editForm, name: e.target.value })} required />
+                  onChange={e => { const v = e.target.value; setEditForm(p => ({ ...p, name: v })); }} required />
               </Field>
               <Field label="Phone *">
                 <input className="input" value={editForm.phone}
-                  onChange={e => setEditForm({ ...editForm, phone: e.target.value })} required />
+                  onChange={e => { const v = e.target.value; setEditForm(p => ({ ...p, phone: v })); }} required />
               </Field>
               <Field label="Email">
                 <input type="email" className="input" value={editForm.email}
-                  onChange={e => setEditForm({ ...editForm, email: e.target.value })} />
+                  onChange={e => { const v = e.target.value; setEditForm(p => ({ ...p, email: v })); }} />
               </Field>
               <Field label="Status">
                 <select className="input" value={editForm.status}
-                  onChange={e => setEditForm({ ...editForm, status: e.target.value })}>
+                  onChange={e => { const v = e.target.value; setEditForm(p => ({ ...p, status: v })); }}>
                   {Object.entries(statusLabels).map(([k, v]) => (
                     <option key={k} value={k}>{v}</option>
                   ))}
@@ -236,19 +236,19 @@ export default function LeadDetailPage() {
               </Field>
               <Field label="City">
                 <input className="input" value={editForm.city}
-                  onChange={e => setEditForm({ ...editForm, city: e.target.value })} />
+                  onChange={e => { const v = e.target.value; setEditForm(p => ({ ...p, city: v })); }} />
               </Field>
               <Field label="Product">
                 <input className="input" value={editForm.product}
-                  onChange={e => setEditForm({ ...editForm, product: e.target.value })} />
+                  onChange={e => { const v = e.target.value; setEditForm(p => ({ ...p, product: v })); }} />
               </Field>
               <Field label="Budget">
                 <input className="input" value={editForm.budget}
-                  onChange={e => setEditForm({ ...editForm, budget: e.target.value })} />
+                  onChange={e => { const v = e.target.value; setEditForm(p => ({ ...p, budget: v })); }} />
               </Field>
               <Field label="Source">
                 <select className="input" value={editForm.source}
-                  onChange={e => setEditForm({ ...editForm, source: e.target.value })}>
+                  onChange={e => { const v = e.target.value; setEditForm(p => ({ ...p, source: v })); }}>
                   <option value="manual">Manual</option>
                   <option value="website">Website</option>
                   <option value="referral">Referral</option>
@@ -260,7 +260,7 @@ export default function LeadDetailPage() {
               <div className="md:col-span-2">
                 <Field label="Notes">
                   <textarea className="input resize-none" rows={3} value={editForm.notes}
-                    onChange={e => setEditForm({ ...editForm, notes: e.target.value })} />
+                    onChange={e => { const v = e.target.value; setEditForm(p => ({ ...p, notes: v })); }} />
                 </Field>
               </div>
             </div>
@@ -283,7 +283,7 @@ export default function LeadDetailPage() {
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>Follow-up Type *</label>
                 <select className="input" value={fuForm.followUpTypeId}
-                  onChange={e => setFuForm({ ...fuForm, followUpTypeId: e.target.value })} required>
+                  onChange={e => { const v = e.target.value; setFuForm(p => ({ ...p, followUpTypeId: v })); }} required>
                   <option value="">Select type...</option>
                   {types.map(t => <option key={t._id} value={t._id}>{t.label}</option>)}
                 </select>
@@ -291,7 +291,7 @@ export default function LeadDetailPage() {
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>Communication Method *</label>
                 <select className="input" value={fuForm.communicationMethod}
-                  onChange={e => setFuForm({ ...fuForm, communicationMethod: e.target.value })}>
+                  onChange={e => { const v = e.target.value; setFuForm(p => ({ ...p, communicationMethod: v })); }}>
                   <option value="call">📞 Call</option>
                   <option value="whatsapp">💬 WhatsApp</option>
                   <option value="email">📧 Email</option>
@@ -304,12 +304,12 @@ export default function LeadDetailPage() {
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>Remark</label>
               <textarea className="input resize-none" rows={3} placeholder="Add your notes..."
-                value={fuForm.remark} onChange={e => setFuForm({ ...fuForm, remark: e.target.value })} />
+                value={fuForm.remark} onChange={e => { const v = e.target.value; setFuForm(p => ({ ...p, remark: v })); }} />
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>Next Follow-up Date & Time</label>
               <input type="datetime-local" className="input" value={fuForm.nextFollowUpDate}
-                onChange={e => setFuForm({ ...fuForm, nextFollowUpDate: e.target.value })} />
+                onChange={e => { const v = e.target.value; setFuForm(p => ({ ...p, nextFollowUpDate: v })); }} />
             </div>
             <div className="flex gap-3">
               <button type="submit" className="btn-primary flex-1" disabled={createFUMutation.isPending}>

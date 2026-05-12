@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { rolesAPI } from '../api';
+import { rolesAPI, authAPI } from '../api';
+import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ui/ConfirmModal';
 
@@ -41,8 +42,23 @@ export default function RolesPage() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm]           = useState({ label: '', permissions: { ...defaultPerms } });
   const [editId, setEditId]       = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(null); // role object
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const qc = useQueryClient();
+  const { user: authUser } = useAuthStore();
+  const isSuperAdmin = authUser?.role === 'superadmin';
+
+  // Fresh permissions from server
+  const { data: meData } = useQuery({
+    queryKey: ['me'],
+    queryFn: () => authAPI.getMe().then(r => r.data),
+    staleTime: 0,
+  });
+  const freshUser = meData?.user || authUser;
+
+  // Permissions this user can grant in roles
+  const grantablePerms = isSuperAdmin
+    ? PERMISSIONS
+    : PERMISSIONS.filter(p => freshUser?.permissions?.[p.key] === true);
 
   const { data, isLoading } = useQuery({
     queryKey: ['roles'],
@@ -68,6 +84,18 @@ export default function RolesPage() {
   });
 
   const roles = data?.roles || [];
+
+  // Orgadmin: hide superadmin system role, show only relevant roles
+  const visibleRoles = isSuperAdmin
+    ? roles
+    : roles.filter(r => !(r.isSystem && r.name === 'superadmin'));
+
+  // Can edit a role: superadmin can edit all custom, orgadmin can only edit their org's custom roles
+  const canEditRole = (role) => {
+    if (role.isSystem) return false; // nobody edits system roles
+    if (isSuperAdmin) return true;
+    return !role.organization || role.organization === authUser?.organization;
+  };
 
   const openModal = (role = null) => {
     if (role) {
@@ -110,8 +138,10 @@ export default function RolesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {roles.map((role) => {
+          {visibleRoles.map((role) => {
             const pc = permCount(role.permissions);
+            // For non-superadmin: only show permissions they can grant
+            const visiblePerms = isSuperAdmin ? PERMISSIONS : grantablePerms;
             return (
               <div key={role._id} className="card hover:shadow-md transition-all">
                 {/* Header */}
@@ -136,9 +166,9 @@ export default function RolesPage() {
                   </span>
                 </div>
 
-                {/* Permissions */}
+                {/* Permissions — only show grantable ones for non-superadmin */}
                 <div className="flex flex-wrap gap-1 mb-3">
-                  {PERMISSIONS.map(p => (
+                  {visiblePerms.map(p => (
                     <span key={p.key}
                       className="text-[10px] px-1.5 py-0.5 rounded-md font-medium"
                       style={{
@@ -152,16 +182,20 @@ export default function RolesPage() {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
-                  <button onClick={() => openModal(role)}
-                    className="btn-secondary text-xs flex-1 py-1.5">
-                    ✏️ Edit
-                  </button>
-                  {!role.isSystem && (
-                    <button
-                      onClick={() => setConfirmDelete(role)}
-                      className="btn-danger text-xs flex-1 py-1.5">
-                      🗑️ Delete
-                    </button>
+                  {canEditRole(role) ? (
+                    <>
+                      <button onClick={() => openModal(role)} className="btn-secondary text-xs flex-1 py-1.5">
+                        ✏️ Edit
+                      </button>
+                      <button onClick={() => setConfirmDelete(role)} className="btn-danger text-xs flex-1 py-1.5">
+                        🗑️ Delete
+                      </button>
+                    </>
+                  ) : (
+                    <div className="flex-1 text-center text-xs py-1.5 rounded-xl"
+                      style={{ backgroundColor: 'var(--bg-card2)', color: 'var(--text-muted)' }}>
+                      🔒 {role.isSystem ? 'System Role' : 'Read Only'}
+                    </div>
                   )}
                 </div>
               </div>
