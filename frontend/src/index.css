@@ -132,7 +132,7 @@ html.dark {
     background-color: var(--bg-input);
     border: 1.5px solid var(--border-input);
     color: var(--text-primary);
-    /* Fix Android keyboard dismiss issue */
+    /* Fix iOS/Android keyboard dismiss issue */
     font-size: 16px !important;
     -webkit-user-select: text;
     user-select: text;
@@ -164,25 +164,36 @@ html.dark {
   .table-row { border-bottom: 1px solid var(--border); transition: background 0.1s; }
   .table-row:hover { background-color: var(--bg-hover); }
 
-  /* Modal */
+  /* Modal — iOS Safari fix */
   .modal-overlay {
     @apply fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4;
     background: rgba(0,0,0,0.45);
     backdrop-filter: blur(4px);
-    /* Fix: allow scroll when keyboard opens on mobile */
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    /* iOS: don't use overflow-y here — causes keyboard issues */
   }
   .modal-box {
-    @apply w-full sm:max-w-lg overflow-y-auto;
-    /* Use max-height with dvh so keyboard doesn't cut off modal */
-    max-height: 92dvh;
+    @apply w-full sm:max-w-lg;
+    /* iOS Safari: scroll inside modal, not the overlay */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Leave room for iOS keyboard + bottom bar */
+    max-height: 80vh;
+    max-height: 80dvh;
     background-color: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 24px 24px 0 0;
     box-shadow: var(--shadow-lg);
+    /* iOS home indicator safe area */
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
   }
-  @media (min-width: 640px) { .modal-box { border-radius: 20px; } }
+  @media (min-width: 640px) {
+    .modal-box {
+      border-radius: 20px;
+      max-height: 90vh;
+      max-height: 90dvh;
+      padding-bottom: 0;
+    }
+  }
 
   /* Toggle Switch */
   .toggle-track {
