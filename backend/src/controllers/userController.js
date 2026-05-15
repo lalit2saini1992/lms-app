@@ -8,12 +8,10 @@ const getUsers = async (req, res) => {
     const { role, isActive, search, orgId, noOrg } = req.query;
     const filter = {};
 
-    // Superadmin — can filter by org or see all
     if (req.user.role === 'superadmin') {
       if (orgId) filter.organization = orgId;
-      else if (noOrg === 'true') filter.organization = null; // platform users only
+      else if (noOrg === 'true') filter.organization = null;
     } else {
-      // Org users see only their org users
       if (req.user.organization) filter.organization = req.user.organization;
     }
 
@@ -56,7 +54,6 @@ const createUser = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email already in use' });
     }
 
-    // Determine organization
     let organization = null;
     if (req.user.role === 'superadmin') {
       organization = orgId || null;
@@ -72,8 +69,6 @@ const createUser = async (req, res) => {
     user.setDefaultPermissions();
 
     if (permissions) {
-      // Prevent privilege escalation — can only grant permissions you yourself have
-      // Superadmin can grant anything
       const safePerms = req.user.role === 'superadmin'
         ? permissions
         : Object.fromEntries(
@@ -119,9 +114,10 @@ const updateUser = async (req, res) => {
       return res.status(403).json({ success: false, message: 'You cannot change your own role' });
     }
 
-    // Only superadmin can change permissions
-    if (permissions && req.user.role !== 'superadmin') {
-      return res.status(403).json({ success: false, message: 'Only Super Admin can change permissions' });
+    // Permissions: superadmin can change all, orgadmin/admin can change within their own permissions
+    const canChangePermissions = ['superadmin', 'orgadmin', 'admin'].includes(req.user.role);
+    if (permissions && !canChangePermissions) {
+      return res.status(403).json({ success: false, message: 'You do not have permission to change permissions' });
     }
 
     // Role hierarchy — cannot assign role >= own level
@@ -135,9 +131,9 @@ const updateUser = async (req, res) => {
     }
 
     const changes = {};
-    if (name && name !== user.name)   { changes.name = { from: user.name, to: name }; user.name = name; }
-    if (phone !== undefined)          { user.phone = phone; }
-    if (isActive !== undefined)       { user.isActive = isActive; }
+    if (name && name !== user.name) { changes.name = { from: user.name, to: name }; user.name = name; }
+    if (phone !== undefined)        { user.phone = phone; }
+    if (isActive !== undefined)     { user.isActive = isActive; }
 
     if (role && role !== user.role) {
       changes.role = { from: user.role, to: role };
@@ -145,16 +141,19 @@ const updateUser = async (req, res) => {
       user.setDefaultPermissions();
     }
 
-    if (permissions && req.user.role === 'superadmin') {
-      user.permissions = { ...user.permissions, ...permissions };
-    } else if (permissions && (req.user.role === 'orgadmin' || req.user.role === 'admin')) {
-      // OrgAdmin/Admin can only grant permissions they themselves have
-      const safePerms = Object.fromEntries(
-        Object.entries(permissions).filter(([key, val]) =>
-          val === false || req.user.permissions?.[key] === true
-        )
-      );
-      user.permissions = { ...user.permissions, ...safePerms };
+    if (permissions) {
+      if (req.user.role === 'superadmin') {
+        // Superadmin can grant anything
+        user.permissions = { ...user.permissions, ...permissions };
+      } else {
+        // OrgAdmin/Admin can only grant permissions they themselves have (no escalation)
+        const safePerms = Object.fromEntries(
+          Object.entries(permissions).filter(([key, val]) =>
+            val === false || req.user.permissions?.[key] === true
+          )
+        );
+        user.permissions = { ...user.permissions, ...safePerms };
+      }
     }
 
     await user.save();
@@ -182,12 +181,10 @@ const deleteUser = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-    // Cannot deactivate yourself
     if (user._id.toString() === req.user._id.toString()) {
       return res.status(400).json({ success: false, message: 'You cannot deactivate your own account' });
     }
 
-    // Role hierarchy check — lower role cannot deactivate higher role
     const hierarchy = { superadmin: 4, orgadmin: 3, admin: 3, manager: 2, employee: 1 };
     const requesterLevel = hierarchy[req.user.role] || 0;
     const targetLevel    = hierarchy[user.role]     || 0;

@@ -703,8 +703,9 @@ export default function UsersPage() {
                 )}
               </div>
 
-              {/* Footer */}
-              <div className="px-6 pb-6 flex gap-3">
+              {/* Footer — sticky so always visible on iOS */}
+              <div className="px-6 py-4 flex gap-3 sticky bottom-0"
+                style={{ backgroundColor: 'var(--bg-card)', borderTop: '1px solid var(--border)' }}>
                 <button type="submit" className="btn-primary flex-1"
                   disabled={createMutation.isPending || updateMutation.isPending}>
                   {createMutation.isPending || updateMutation.isPending
