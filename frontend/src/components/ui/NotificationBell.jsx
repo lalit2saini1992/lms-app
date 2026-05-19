@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { notificationsAPI } from '../../api';
 import { timeAgo } from '../../utils/helpers';
 import toast from 'react-hot-toast';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 const typeIcons = {
   lead_assigned:   '👤',
@@ -59,6 +60,9 @@ export default function NotificationBell() {
 
   const notifications = data?.notifications || [];
   const unread        = data?.unreadCount   || 0;
+
+  // Lock body scroll on mobile when dropdown open
+  useBodyScrollLock(open);
 
   const handleClick = (n) => {
     if (!n.isRead) markReadMutation.mutate(n._id);

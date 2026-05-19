@@ -4,6 +4,7 @@ import { rolesAPI, authAPI } from '../api';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import useBodyScrollLock from '../hooks/useBodyScrollLock';
 
 const PERMISSIONS = [
   { key: 'canAddLead',             label: 'Add Lead',               icon: '➕' },
@@ -119,6 +120,8 @@ export default function RolesPage() {
 
   const togglePerm = (key, val) => setForm(f => ({ ...f, permissions: { ...f.permissions, [key]: val } }));
   const permCount = (perms) => Object.values(perms || {}).filter(Boolean).length;
+
+  useBodyScrollLock(showModal);
 
   return (
     <div className="space-y-4 page-enter">

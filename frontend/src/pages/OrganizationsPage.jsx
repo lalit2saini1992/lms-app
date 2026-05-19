@@ -4,6 +4,7 @@ import { orgsAPI, plansAPI } from '../api';
 import { formatDate, statusColors, statusLabels } from '../utils/helpers';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import useBodyScrollLock from '../hooks/useBodyScrollLock';
 
 const DURATIONS = [
   { key: 'quarterly',  label: 'Quarterly',   sub: '3 months'  },
@@ -145,6 +146,8 @@ export default function OrganizationsPage() {
   };
 
   const f = (field) => (e) => setForm(prev => ({ ...prev, [field]: e.target.value }));
+
+  useBodyScrollLock(showModal || !!(showDetail && detailData));
 
   const selectedPlan = availablePlans.find(p => p._id === form.planId);
 

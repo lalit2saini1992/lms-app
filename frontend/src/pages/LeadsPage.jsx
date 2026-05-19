@@ -6,6 +6,7 @@ import useAuthStore from '../store/authStore';
 import { statusColors, statusLabels, formatDate } from '../utils/helpers';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import useBodyScrollLock from '../hooks/useBodyScrollLock';
 
 export default function LeadsPage() {
   const { user } = useAuthStore();
@@ -103,6 +104,8 @@ export default function LeadsPage() {
   const canAdd    = user?.permissions?.canAddLead;
   const canImport = user?.permissions?.canImportLead;
   const canDelete = user?.permissions?.canDeleteLead || isSuperAdmin;
+
+  useBodyScrollLock(assignModal);
 
   return (
     <div className="space-y-4 page-enter">

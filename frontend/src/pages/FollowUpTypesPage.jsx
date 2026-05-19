@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { followupsAPI } from '../api';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import useBodyScrollLock from '../hooks/useBodyScrollLock';
 
 const PRESET_COLORS = ['#7c3aed','#6366f1','#2563eb','#0891b2','#059669','#16a34a','#d97706','#ea580c','#dc2626','#db2777','#64748b'];
 
@@ -58,6 +59,8 @@ export default function FollowUpTypesPage() {
     setShowModal(true);
   };
   const closeModal = () => { setShowModal(false); setEditId(null); setForm(initialForm); };
+
+  useBodyScrollLock(showModal);
 
   const handleSubmit = (e) => {
     e.preventDefault();

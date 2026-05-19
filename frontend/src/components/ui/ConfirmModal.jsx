@@ -1,16 +1,5 @@
-/**
- * Reusable confirm dialog — replaces window.confirm everywhere
- * Usage:
- *   <ConfirmModal
- *     isOpen={showConfirm}
- *     title="Delete Lead?"
- *     message="This action cannot be undone."
- *     confirmLabel="Delete"
- *     confirmClass="btn-danger"
- *     onConfirm={() => { doDelete(); setShowConfirm(false); }}
- *     onCancel={() => setShowConfirm(false)}
- *   />
- */
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
+
 export default function ConfirmModal({
   isOpen,
   title = 'Are you sure?',
@@ -23,6 +12,8 @@ export default function ConfirmModal({
   onCancel,
   loading = false,
 }) {
+  useBodyScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   return (
@@ -32,7 +23,6 @@ export default function ConfirmModal({
         style={{ maxWidth: '420px' }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Icon */}
         <div className="flex flex-col items-center text-center mb-5">
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mb-3"
@@ -50,20 +40,11 @@ export default function ConfirmModal({
           )}
         </div>
 
-        {/* Buttons */}
         <div className="flex gap-3">
-          <button
-            className="btn-secondary flex-1"
-            onClick={onCancel}
-            disabled={loading}
-          >
+          <button className="btn-secondary flex-1" onClick={onCancel} disabled={loading}>
             {cancelLabel}
           </button>
-          <button
-            className={`${confirmClass} flex-1`}
-            onClick={onConfirm}
-            disabled={loading}
-          >
+          <button className={`${confirmClass} flex-1`} onClick={onConfirm} disabled={loading}>
             {loading ? 'Please wait...' : confirmLabel}
           </button>
         </div>

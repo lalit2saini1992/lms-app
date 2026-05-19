@@ -5,6 +5,7 @@ import useAuthStore from '../store/authStore';
 import { roleColors, formatDate, statusColors, statusLabels } from '../utils/helpers';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import useBodyScrollLock from '../hooks/useBodyScrollLock';
 
 const PERMISSIONS = [
   { key: 'canAddLead',              label: 'Add Lead',              icon: '➕' },
@@ -192,6 +193,9 @@ export default function UsersPage() {
   };
 
   const permCount = Object.values(form.permissions).filter(Boolean).length;
+
+  // Lock body scroll when modal open (iOS Safari fix)
+  useBodyScrollLock(showModal);
 
   return (
     <div className="space-y-4 page-enter">
