@@ -166,33 +166,57 @@ html.dark {
 
   /* Modal — iOS Safari fix */
   .modal-overlay {
-    @apply fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4;
-    background: rgba(0,0,0,0.45);
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0,0,0,0.5);
     backdrop-filter: blur(4px);
-    /* iOS: do NOT put overflow here */
+    /* iOS: prevent overlay itself from scrolling */
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: auto;
+  }
+  @media (min-width: 640px) {
+    .modal-overlay { align-items: center; padding: 1rem; }
   }
   .modal-box {
-    @apply w-full sm:max-w-lg;
+    width: 100%;
     display: flex;
     flex-direction: column;
-    /* iOS Safari: 80dvh leaves room for keyboard */
-    max-height: 80vh;
-    max-height: 80dvh;
-    /* Scroll inside modal only */
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    /* iOS Safari: use svh (small viewport height) to account for browser chrome */
+    max-height: 85svh;
+    max-height: 85vh;
+    overflow: hidden; /* children handle their own scroll */
     background-color: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 24px 24px 0 0;
+    border-radius: 20px 20px 0 0;
     box-shadow: var(--shadow-lg);
   }
   @media (min-width: 640px) {
     .modal-box {
+      max-width: 32rem;
       border-radius: 20px;
+      max-height: 90svh;
       max-height: 90vh;
-      max-height: 90dvh;
     }
+  }
+  /* Scrollable area inside modal */
+  .modal-scroll {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  /* Fixed footer inside modal */
+  .modal-footer {
+    flex-shrink: 0;
+    padding: 1rem 1.5rem;
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+    border-top: 1px solid var(--border);
+    background-color: var(--bg-card);
   }
 
   /* Toggle Switch */

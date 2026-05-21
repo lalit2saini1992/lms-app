@@ -529,7 +529,7 @@ export default function UsersPage() {
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
               {/* Scrollable content */}
-              <div className="px-6 py-4 space-y-4 overflow-y-auto flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="modal-scroll px-6 py-4 space-y-4">
 
                 {/* Info Tab */}
                 {activeTab === 'info' && (
@@ -707,9 +707,8 @@ export default function UsersPage() {
                 )}
               </div>
 
-              {/* Footer — sticky bottom, always visible */}
-              <div className="px-6 py-4 flex gap-3 flex-shrink-0"
-                style={{ borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg-card)', paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}>
+              {/* Footer — always visible */}
+              <div className="modal-footer flex gap-3">
                 <button type="submit" className="btn-primary flex-1"
                   disabled={createMutation.isPending || updateMutation.isPending}>
                   {createMutation.isPending || updateMutation.isPending

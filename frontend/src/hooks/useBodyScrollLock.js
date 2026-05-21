@@ -1,35 +1,34 @@
 import { useEffect } from 'react';
 
 /**
- * iOS Safari compatible body scroll lock.
- * Uses touchmove prevention instead of position:fixed which breaks iOS.
+ * iOS Safari compatible scroll lock.
+ * Saves scroll position and uses position:fixed on html element (not body).
+ * This is the most reliable approach for iOS Safari.
  */
 export default function useBodyScrollLock(isLocked) {
   useEffect(() => {
     if (!isLocked) return;
 
-    // Save current scroll position
+    const html = document.documentElement;
+    const body = document.body;
     const scrollY = window.scrollY;
 
-    // Prevent touchmove on body (iOS Safari fix)
-    const preventScroll = (e) => {
-      // Allow scroll inside elements that have overflow scroll
-      let el = e.target;
-      while (el && el !== document.body) {
-        const style = window.getComputedStyle(el);
-        const overflow = style.overflow + style.overflowY;
-        if (overflow.includes('scroll') || overflow.includes('auto')) {
-          return; // allow scroll inside modal content
-        }
-        el = el.parentElement;
-      }
-      e.preventDefault();
-    };
-
-    document.addEventListener('touchmove', preventScroll, { passive: false });
+    // Apply to both html and body for maximum iOS compatibility
+    html.style.overflow = 'hidden';
+    html.style.height = '100%';
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.width = '100%';
 
     return () => {
-      document.removeEventListener('touchmove', preventScroll);
+      html.style.overflow = '';
+      html.style.height = '';
+      body.style.overflow = '';
+      body.style.position = '';
+      body.style.top = '';
+      body.style.width = '';
+      window.scrollTo(0, scrollY);
     };
   }, [isLocked]);
 }
