@@ -499,13 +499,12 @@ export default function UsersPage() {
 
       {/* ── USER MODAL ────────────────────────────────────────────────────── */}
       {showModal && (
-        <div className="modal-overlay">
+        <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
-            {/* Handle */}
             <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1 sm:hidden" style={{ backgroundColor: 'var(--border)' }} />
 
-            {/* Modal header */}
-            <div className="px-6 pt-5 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
+            {/* Modal header — fixed */}
+            <div className="px-6 pt-5 pb-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
               <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
                 {editId ? 'Edit User' : 'Add New User'}
               </h3>
@@ -514,8 +513,8 @@ export default function UsersPage() {
               </p>
             </div>
 
-            {/* Tabs */}
-            <div className="flex px-6 pt-4 gap-1">
+            {/* Tabs — fixed */}
+            <div className="flex px-6 pt-4 gap-1 flex-shrink-0">
               {['info', 'permissions'].map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
                   className="px-4 py-2 rounded-xl text-sm font-semibold transition-all capitalize"
@@ -528,8 +527,9 @@ export default function UsersPage() {
               ))}
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="px-6 py-4 space-y-4">
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+              {/* Scrollable content */}
+              <div className="px-6 py-4 space-y-4 overflow-y-auto flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
 
                 {/* Info Tab */}
                 {activeTab === 'info' && (
@@ -707,9 +707,9 @@ export default function UsersPage() {
                 )}
               </div>
 
-              {/* Footer — sticky so always visible on iOS */}
-              <div className="px-6 py-4 flex gap-3 sticky bottom-0"
-                style={{ backgroundColor: 'var(--bg-card)', borderTop: '1px solid var(--border)' }}>
+              {/* Footer — sticky bottom, always visible */}
+              <div className="px-6 py-4 flex gap-3 flex-shrink-0"
+                style={{ borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg-card)', paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}>
                 <button type="submit" className="btn-primary flex-1"
                   disabled={createMutation.isPending || updateMutation.isPending}>
                   {createMutation.isPending || updateMutation.isPending

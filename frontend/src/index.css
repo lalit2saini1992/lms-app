@@ -169,29 +169,29 @@ html.dark {
     @apply fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4;
     background: rgba(0,0,0,0.45);
     backdrop-filter: blur(4px);
-    /* iOS: don't use overflow-y here — causes keyboard issues */
+    /* iOS: do NOT put overflow here */
   }
   .modal-box {
     @apply w-full sm:max-w-lg;
-    /* iOS Safari: scroll inside modal, not the overlay */
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    /* Leave room for iOS keyboard + bottom bar */
+    display: flex;
+    flex-direction: column;
+    /* iOS Safari: 80dvh leaves room for keyboard */
     max-height: 80vh;
     max-height: 80dvh;
+    /* Scroll inside modal only */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     background-color: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 24px 24px 0 0;
     box-shadow: var(--shadow-lg);
-    /* iOS home indicator safe area */
-    padding-bottom: max(env(safe-area-inset-bottom), 16px);
   }
   @media (min-width: 640px) {
     .modal-box {
       border-radius: 20px;
       max-height: 90vh;
       max-height: 90dvh;
-      padding-bottom: 0;
     }
   }
 
