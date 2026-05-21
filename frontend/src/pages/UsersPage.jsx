@@ -527,9 +527,9 @@ export default function UsersPage() {
               ))}
             </div>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+            <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
               {/* Scrollable content */}
-              <div className="modal-scroll px-6 py-4 space-y-4">
+              <div className="px-6 py-4 space-y-4">
 
                 {/* Info Tab */}
                 {activeTab === 'info' && (

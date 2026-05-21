@@ -185,10 +185,10 @@ html.dark {
     width: 100%;
     display: flex;
     flex-direction: column;
-    /* iOS Safari: use svh (small viewport height) to account for browser chrome */
-    max-height: 85svh;
     max-height: 85vh;
-    overflow: hidden; /* children handle their own scroll */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     background-color: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 20px 20px 0 0;
@@ -198,7 +198,6 @@ html.dark {
     .modal-box {
       max-width: 32rem;
       border-radius: 20px;
-      max-height: 90svh;
       max-height: 90vh;
     }
   }
@@ -209,13 +208,16 @@ html.dark {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
-  /* Fixed footer inside modal */
+  /* Fixed footer inside modal — sticky bottom */
   .modal-footer {
+    position: sticky;
+    bottom: 0;
     flex-shrink: 0;
     padding: 1rem 1.5rem;
     padding-bottom: max(env(safe-area-inset-bottom), 1rem);
     border-top: 1px solid var(--border);
     background-color: var(--bg-card);
+    z-index: 1;
   }
 
   /* Toggle Switch */
