@@ -7,8 +7,8 @@ import useAuthStore from '../store/authStore';
 
 const COLORS = ['#7c3aed','#f59e0b','#6366f1','#10b981','#ef4444','#06b6d4','#94a3b8'];
 
-const StatCard = ({ label, value, icon, color }) => (
-  <div className="card hover:shadow-md transition-all">
+const StatCard = ({ label, value, icon, color, to }) => {
+  const content = (
     <div className="flex items-start justify-between">
       <div>
         <p className="text-3xl font-black mt-1" style={{ color: 'var(--text-primary)' }}>{value ?? '—'}</p>
@@ -16,8 +16,17 @@ const StatCard = ({ label, value, icon, color }) => (
       </div>
       <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl ${color}`}>{icon}</div>
     </div>
-  </div>
-);
+  );
+
+  if (to) {
+    return (
+      <Link to={to} className="card hover:shadow-md transition-all block active:scale-95">
+        {content}
+      </Link>
+    );
+  }
+  return <div className="card hover:shadow-md transition-all">{content}</div>;
+};
 
 const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -49,14 +58,14 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard label="Total Organizations" value={s.totalOrgs}     icon="🏢" color="bg-violet-50" />
-          <StatCard label="Active"              value={s.activeOrgs}    icon="✅" color="bg-emerald-50" />
-          <StatCard label="Trial"               value={s.trialOrgs}     icon="⏳" color="bg-blue-50" />
-          <StatCard label="Expiring Soon"       value={s.expiringSoon}  icon="⚠️" color="bg-red-50" />
+          <StatCard label="Total Organizations" value={s.totalOrgs}     icon="🏢" color="bg-violet-50"  to="/organizations" />
+          <StatCard label="Active"              value={s.activeOrgs}    icon="✅" color="bg-emerald-50" to="/organizations" />
+          <StatCard label="Trial"               value={s.trialOrgs}     icon="⏳" color="bg-blue-50"    to="/organizations" />
+          <StatCard label="Expiring Soon"       value={s.expiringSoon}  icon="⚠️" color="bg-red-50"    to="/organizations" />
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <StatCard label="Total Users"  value={s.totalUsers}  icon="👤" color="bg-indigo-50" />
-          <StatCard label="Total Leads"  value={s.totalLeads}  icon="👥" color="bg-amber-50" />
+          <StatCard label="Total Users"  value={s.totalUsers}  icon="👤" color="bg-indigo-50" to="/users" />
+          <StatCard label="Total Leads"  value={s.totalLeads}  icon="👥" color="bg-amber-50"  to="/leads" />
         </div>
         <div className="card text-center py-8">
           <p className="text-4xl mb-3">🏢</p>
@@ -83,11 +92,11 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <StatCard label="Total Leads"   value={stats.totalLeads}      icon="👥" color="bg-violet-50 dark:bg-violet-900/20" />
-        <StatCard label="New"           value={stats.newLeads}         icon="🆕" color="bg-blue-50 dark:bg-blue-900/20" />
-        <StatCard label="In Progress"   value={stats.inProgressLeads}  icon="⚡" color="bg-amber-50 dark:bg-amber-900/20" />
-        <StatCard label="Converted"     value={stats.convertedLeads}   icon="✅" color="bg-emerald-50 dark:bg-emerald-900/20" />
-        <StatCard label="Due Today"     value={stats.dueToday}         icon="📅" color="bg-red-50 dark:bg-red-900/20" />
+        <StatCard label="Total Leads"   value={stats.totalLeads}      icon="👥" color="bg-violet-50 dark:bg-violet-900/20" to="/leads" />
+        <StatCard label="New"           value={stats.newLeads}         icon="🆕" color="bg-blue-50 dark:bg-blue-900/20"   to="/leads?status=new" />
+        <StatCard label="In Progress"   value={stats.inProgressLeads}  icon="⚡" color="bg-amber-50 dark:bg-amber-900/20"  to="/leads?status=in_progress" />
+        <StatCard label="Converted"     value={stats.convertedLeads}   icon="✅" color="bg-emerald-50 dark:bg-emerald-900/20" to="/leads?status=converted" />
+        <StatCard label="Due Today"     value={stats.dueToday}         icon="📅" color="bg-red-50 dark:bg-red-900/20"     to="/leads" />
       </div>
 
       {/* Charts */}

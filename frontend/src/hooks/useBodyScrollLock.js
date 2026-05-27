@@ -1,14 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import useModalStore from '../store/modalStore';
 
 /**
  * iOS Safari compatible scroll lock.
- * Also hides bottom nav when modal is open.
+ * Hides bottom nav when modal is open.
+ * Uses ref to avoid redundant store updates.
  */
 export default function useBodyScrollLock(isLocked) {
   const { openModal, closeModal } = useModalStore();
+  const wasLocked = useRef(false);
 
   useEffect(() => {
+    // Only act when state actually changes
+    if (isLocked === wasLocked.current) return;
+    wasLocked.current = isLocked;
+
     if (!isLocked) {
       closeModal();
       return;
@@ -28,7 +34,6 @@ export default function useBodyScrollLock(isLocked) {
     body.style.width = '100%';
 
     return () => {
-      closeModal();
       html.style.overflow = '';
       html.style.height = '';
       body.style.overflow = '';

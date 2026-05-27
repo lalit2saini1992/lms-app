@@ -538,13 +538,13 @@ export default function UsersPage() {
                       <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
                         style={{ color: 'var(--text-muted)' }}>Full Name *</label>
                       <input className="input" placeholder="John Doe"
-                        value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+                        value={form.name} onChange={e => { const v = e.target.value; setForm(f => ({ ...f, name: v })); }} required />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
                         style={{ color: 'var(--text-muted)' }}>Email *</label>
                       <input type="email" className="input" placeholder="john@company.com"
-                        value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                        value={form.email} onChange={e => { const v = e.target.value; setForm(f => ({ ...f, email: v })); }}
                         required disabled={!!editId} />
                     </div>
                     {!editId && (
@@ -552,14 +552,14 @@ export default function UsersPage() {
                         <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
                           style={{ color: 'var(--text-muted)' }}>Password *</label>
                         <input type="password" className="input" placeholder="Min 6 characters"
-                          value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required />
+                          value={form.password} onChange={e => { const v = e.target.value; setForm(f => ({ ...f, password: v })); }} required />
                       </div>
                     )}
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
                         style={{ color: 'var(--text-muted)' }}>Phone</label>
                       <input className="input" placeholder="9876543210"
-                        value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+                        value={form.phone} onChange={e => { const v = e.target.value; setForm(f => ({ ...f, phone: v })); }} />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"

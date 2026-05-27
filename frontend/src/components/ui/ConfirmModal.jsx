@@ -1,5 +1,5 @@
-import useBodyScrollLock from '../../hooks/useBodyScrollLock';
-
+// ConfirmModal does NOT use useBodyScrollLock
+// Parent modal already handles scroll lock
 export default function ConfirmModal({
   isOpen,
   title = 'Are you sure?',
@@ -12,8 +12,6 @@ export default function ConfirmModal({
   onCancel,
   loading = false,
 }) {
-  useBodyScrollLock(isOpen);
-
   if (!isOpen) return null;
 
   return (
