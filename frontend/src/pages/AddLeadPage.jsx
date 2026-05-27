@@ -10,6 +10,15 @@ const initialForm = {
   notes: '', address: '', city: '', product: '', budget: '', assignedTo: '',
 };
 
+// Defined OUTSIDE component — prevents remount on every render
+const Field = ({ label, children }) => (
+  <div>
+    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+      style={{ color: 'var(--text-muted)' }}>{label}</label>
+    {children}
+  </div>
+);
+
 export default function AddLeadPage() {
   const [form, setForm] = useState(initialForm);
   const navigate = useNavigate();
@@ -43,14 +52,6 @@ export default function AddLeadPage() {
     setForm(prev => ({ ...prev, [field]: val }));
   };
   const employees = (usersData?.users || []).filter(u => ['employee', 'manager'].includes(u.role));
-
-  const Field = ({ label, children }) => (
-    <div>
-      <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
-        style={{ color: 'var(--text-muted)' }}>{label}</label>
-      {children}
-    </div>
-  );
 
   return (
     <div className="max-w-2xl page-enter">

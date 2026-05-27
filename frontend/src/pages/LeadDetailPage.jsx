@@ -10,6 +10,22 @@ import {
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ui/ConfirmModal';
 
+// Defined OUTSIDE component — prevents remount on every render (keyboard dismiss fix)
+const Field = ({ label, children }) => (
+  <div>
+    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+      style={{ color: 'var(--text-muted)' }}>{label}</label>
+    {children}
+  </div>
+);
+
+const InfoRow = ({ label, value }) => value ? (
+  <div>
+    <p className="text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ color: 'var(--text-muted)' }}>{label}</p>
+    <p className="text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>{value}</p>
+  </div>
+) : null;
+
 export default function LeadDetailPage() {
   const { id } = useParams();
   const { user } = useAuthStore();
@@ -106,20 +122,6 @@ export default function LeadDetailPage() {
     <div className="card text-center py-12">
       <p className="text-4xl mb-3">🔍</p>
       <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>Lead not found</p>
-    </div>
-  );
-
-  const InfoRow = ({ label, value }) => value ? (
-    <div>
-      <p className="text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ color: 'var(--text-muted)' }}>{label}</p>
-      <p className="text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>{value}</p>
-    </div>
-  ) : null;
-
-  const Field = ({ label, children }) => (
-    <div>
-      <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>{label}</label>
-      {children}
     </div>
   );
 
